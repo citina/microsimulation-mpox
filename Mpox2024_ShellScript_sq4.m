@@ -15,7 +15,7 @@ clc
 runSimulations = 1;
 iterations = 1:10;
 waning_ve = 2; % 0-waning ve off, 1-ve wanes to 0 after 12 months, 2-ve wanes to half after 12 months
-scenarios = [15, 16, 17, 18, 19]; %[11, 15, 16, 17, 18, 19];
+scenarios = 17; %[11, 15, 16, 17, 18, 19];
 
 % Week when intervention starts
 policy = 0; % turn on or off policy
@@ -45,7 +45,7 @@ for scenario = scenarios
         selected_wks = randsample(1:T, 9);
     end
  
-    testVersion = strcat('mpox2024_S', num2str(scenario));% S11, S15, S16
+    testVersion = strcat('test_mpox2024_S', num2str(scenario));% S11, S15, S16
 
     % update the complete dataDir header
     testVerDir = strcat(dataDirHeader,"/",testVersion);

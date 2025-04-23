@@ -75,47 +75,6 @@ sym2recover_transition_path = filePaths{17}; % for symptomatic
 % Paths defined for get on treatment transition
 ontrt_transition_path = filePaths{18}; 
 
-% Paths defined for isolation transition
-iso_transition_path = '../input/isolationOn_0.2.csv';%filePaths{19}; 
-
-% % Paths for policies
-% vax_05x = filePaths{20}; 
-% vax_2xblack = filePaths{21}; 
-% vax_2xhis = filePaths{22}; 
-% vax_2xplwh = filePaths{23}; 
-% vax_novax = filePaths{31};
-% vac1_wk1_plwh = filePaths{32};
-% vac1_wk2_plwh = filePaths{33};
-% vac1_wk3_plwh = filePaths{34};
-% vac1_wk9_plwh = filePaths{35};
-% vac1_wk1_hiplwh = filePaths{36};
-% vac1_wk2_hiplwh = filePaths{37};
-% vac1_wk9_hiplwh = filePaths{38};
-% iso_05 = filePaths{24}; 
-% vac1_wk1_2xb = filePaths{39};
-% vac1_wk2_2xb = filePaths{40};
-% vac1_wk3_2xb = filePaths{41};
-% vac1_wk9_2xb = filePaths{42};
-% vac1_wk1_2xh = filePaths{43};
-% vac1_wk2_2xh = filePaths{44};
-% vac1_wk3_2xh = filePaths{45};
-% vac1_wk9_2xh = filePaths{46};
-% vac1_wk1_2xw = filePaths{47};
-% vac1_wk2_2xw = filePaths{48};
-% vac1_wk3_2xw = filePaths{49};
-% vac1_wk9_2xw = filePaths{50};
-% 
-% vac1_wk1_double = filePaths{51};
-% vac1_wk2_double = filePaths{52};
-% vac1_wk3_double = filePaths{53};
-% vac1_wk9_double = filePaths{54};
-
-
-% % Paths for sensitivity analysis
-% asym2sym_transition_path_3 = filePaths{26};
-% asym2sym_transition_path_5 = filePaths{27};
-% asym2sym_transition_path_9 = filePaths{28};
-
 % Define future state parameter names
 future_state_param_names = {'new_state', 'new_prob'};
 

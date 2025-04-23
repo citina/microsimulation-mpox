@@ -18,20 +18,15 @@ fprintf('Number of CPU cores: %d\n', numCores);
 %% Simulation Configuration Parameters
 % Core simulation settings
 NUM_ITERATIONS = 3;           % Number of Monte Carlo iterations
-TESTING_WEEK = 12;            % Week when "event" people leave LAC (if applicable)
 
 % Vaccine efficacy settings
 WANING_VE_MODE = 2;         % 0: No waning
                             % 1: VE wanes to 0 after 12 months
                             % 2: VE wanes to half after 12 months
 
-% Force of infection (FOI) settings
-WEEKLY_FOI = 0;              % 1: Use weekly FOI, 0: Use average FOI
-FOI_VALUES = [1.8];          % FOI values to test (piso = 0.5) %S1, S2, S3
+% Scenarios
+SCENARIOS = [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22];
 
-% Policy intervention settings
-ENABLE_POLICY = 0;           % Flag to enable/disable policy interventions
-POLICY_START_WEEK = 1000;    % Week when policy starts (week0: Jun26-Jul02)
 ENABLE_SENSITIVITY = 0;      % Flag to enable sensitivity analysis
 
 %% File and Directory Configuration
@@ -53,13 +48,12 @@ if ~exist(SIM_INPUT_FILE, 'file')
 end
 
 % Iterate through FOI values
-for foi = FOI_VALUES
+for S = SCENARIOS
+
     % Create version-specific directory
-    testVersion = sprintf('mpox2024_foi_%.2f_iso0.2_test', foi);
+    testVersion = sprintf('mpox2024_S%d', S);
     testVerDir = fullfile(OUTPUT_DIR_HEADER, testVersion);
     mkdir(testVerDir);
-    
-    fprintf('Processing FOI value: %.2f\n', foi);
     
     % Set up parallel processing if multiple iterations
     if NUM_ITERATIONS > 1

@@ -1,6 +1,6 @@
 
 % Input parameters
-mpox2024_parameters3;
+mpox2024_parameters;
 
 if sens
     asym2sym_transition_path = asym2sym_transition_path_9;

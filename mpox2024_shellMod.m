@@ -1,53 +1,39 @@
+% Main simulation script for mpox transmission and vaccination dynamics
+% Simulates mpox spread in a population with vaccination, awareness, treatment, and isolation interventions
 
-% Input parameters
+% Load simulation parameters
 mpox2024_parameters;
 
-if sens
-    asym2sym_transition_path = asym2sym_transition_path_9;
-end
-
-% the state matrix directory is different. It should also be listed as a char not a string
+% Initialize paths and directories
 state_matrices_path = convertStringsToChars(sim_dataDir);
 
-% Read in the initial population from a csv
-% Assumption: the csv file has all the people pre-populated with characteristics
+% Load initial population & mixing matrix data
 [state_matrix, StateMatCols] = read_table(init_pop_file);
-
-% Read in all possible demographic groups
-% age min and max MUST be listed first in excel sheet
 [demog_table, DemogTblCols] = create_demog_groups(demog_var_def_file);
-
-% Read in demographic groups specified in the mixing matrix
-% age min and max MUST be listed first in excel sheet
 [mixing_table, MixingTblCols] = create_demog_groups(mixing_mat_def_file);
-
-% Read in the mixing matrix
 mixing_matrix = importdata(mixing_mat_file);
-
-% read in number of partners vector
 numPartners = importdata(num_partners_file);
 
-% an empty matrix to store tally
+% Initialize tracking variables
 finalTransitionTally = [];
-
-% genereate final output from state matrices
 workingDir_home = pwd;
 
-% clear current matrices in folder
+% Clear existing state matrices
 cd(sim_dataDir);
 delete *.mat
 cd(workingDir_home)
 
-% save iniital population as a state matrix
+% Save initial population state
 matrix_name = strcat(state_matrices_path, int2str(0));
 save(matrix_name, 'state_matrix');
 
-tallyHeaders = {'Week', 'New Births', 'New Infections', 'infected_per_infectious',...
-    'r_t', 'max(infectious_wks)'...
+% Define output tracking headers
+tallyHeaders = {
+    'Week', 'New Births', 'New Infections', 'infected_per_infectious',...
+    'r_t', 'max(infectious_wks)',...
     'new infect|hiv', 'new infect|vax1', 'new infect|vax2',...
     'new infect b', 'new infect h', 'new infect w',...
-    'new infect a1', 'new infect a2', 'new infect a3',...
-    'new infect a4', 'new infect a5',...
+    'new infect a1', 'new infect a2', 'new infect a3', 'new infect a4', 'new infect a5',...
     'To Vax 1', 'To Vax 2', 'To Vax', 'To Vax1 plwh',...
     'To Aware (asym)', 'To Aware (sym)', 'To Aware', 'To aware|hiv',...
     'To Aware b|hiv', 'To Aware h|hiv', 'To Aware w|hiv',...
@@ -70,10 +56,13 @@ tallyHeaders = {'Week', 'New Births', 'New Infections', 'infected_per_infectious
     'vac1_b', 'vac1_h', 'vac1_w',...
     'vac2_b', 'vac2_h', 'vac2_w',...
     'vac1_hiv', 'vac2_hiv',...
-    'on trt', 'on iso', 'hiv aware', 'pox + hiv aware'};
+    'on trt', 'on iso', 'hiv aware', 'pox + hiv aware'
+};
+
+% Initialize tally matrix
 tally = zeros(T+1, length(tallyHeaders)); % +1 cuz include the initial wk as 0
 
-% tally for the initial state matrix
+% Initialize state tracking variables
 alive = state_matrix(:, StateMatCols.alive);
 pox_status = state_matrix(:, StateMatCols.pox_status);
 pox_aware = state_matrix(:, StateMatCols.pox_aware);
@@ -87,6 +76,7 @@ vax_wk = state_matrix(:, StateMatCols.vax_wk);
 ve = state_matrix(:, StateMatCols.ve);
 infectious_wks = state_matrix(:, StateMatCols.infectious_wks);
 
+% Calculate initial state tallies
 tally(1,:) = [zeros(1,68),...
               sum(alive),...
               sum(pox_status==0), sum(pox_status==1),...
@@ -101,187 +91,81 @@ tally(1,:) = [zeros(1,68),...
               sum(vaccinated==1 & hiv_status~=0), sum(vaccinated==2 & hiv_status~=0),...
               sum(treatment==1), sum(isolation==1), sum(hiv_aware==1), sum(hiv_aware==1 & pox_aware==1)];      
 
-%%%%% 2024 set2 updates %%%%%
+%% %%%%%%%%%%%%%%%%%%% Scenario Settings %%%%%%%%%%%%%%%%%%%%%%%%
+% randomly select weeks to assign low FoI 
+rng("shuffle");
+if S==17
+    selected_wks = randsample(1:T, 22);
+elseif S==18
+    selected_wks = randsample(1:T, 13);
+elseif S==19
+    selected_wks = randsample(1:T, 9);
+end
+
+[IMPORTATION_TYPE, iso_transition_path, foi, const_import_num] = set_scenario_parameters(S);
+
 % weekly input schedule: the week and its corresponding number of imports
-import_wk = [1 3 5 7 8 12 13 15 16 20 21 22 23 24 26 27 28 30 31 32 33 35 37 39 41 45 46 50 52 53 54 57 59 60 61 63 64 65 67 68 69 70];
-import_num = [1 1 2 2 1 2 2 1 1 3 1 2 1 2 2 1 3 1 2 4 2 2 1 1 1 1 1 1 1 1 2 3 1 1 2 1 1 1 1 1 1 1];
+if IMPORTATION_TYPE == 2
+    import_wk = [1 3 5 7 8 12 13 15 16 20 21 22 23 24 26 27 28 30 31 32 33 35 37 39 41 45 46 50 52 53 54 57 59 60 61 63 64 65 67 68 69 70];
+    import_num = [1 1 2 2 1 2 2 1 1 3 1 2 1 2 2 1 3 1 2 4 2 2 1 1 1 1 1 1 1 1 2 3 1 1 2 1 1 1 1 1 1 1];
+end
+
+% Set transition path for sensitivity analysis
+if ENABLE_SENSITIVITY
+    asym2sym_transition_path = asym2sym_transition_path_9;
+end
+% for sensitivity analysis
 % import_num = import_num * 2;
 
-% For each week
+%% %%%%%%%%%%%%%%% Main simulation loop for each week %%%%%%%%%%%%%%%%%%%%%%%
 for t = 1:T
-    
+    % Initialize weekly tallies
     [infectionTally, vac1Tally, vac2Tally, awareTally1, awareTally2,...
      asym2symTally, sym2recoverTally, asym2recoverTally, ontrtTally, deathTally,...
      onisoTally] = deal(0);
-   
-    %%%%%%%%%%%%%%% remove the added symptomatic cases %%%%%%%%%%%%%%%%%%
-    if t == tweek
-        state_matrix = state_matrix(state_matrix(:, StateMatCols.added)==0,:);
-        alive = state_matrix(:, StateMatCols.alive);
-        vaccinated = state_matrix(:, StateMatCols.vaccinated);
-        vax_wk = state_matrix(:, StateMatCols.vax_wk);
-        hiv_status = state_matrix(:, StateMatCols.hiv_status);
-%         pox_status = state_matrix(:, StateMatCols.pox_status);
-    end
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%%% update ve  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%     # immunocompetent: one dose ve = 0.721, two doses ve = 0.878
-%     # immunocompromised: one dose ve = 0.51, two doses ve = 0.702
-%     # reach one dose ve after 2 weeks of 1st dose and reach full ve after 2 weeks of 2nd dose
-%     # reference paper link: https://www.nejm.org/doi/full/10.1056/NEJMoa1817307
-%     # Assumption: ve follows a piecewise function (x is # of weeks 1st dose vaccinated , y is ve):
-%
-%     # For immunocompetent individuals
-%     # week 0-2: y = 0.3605x
-%     # week 2-4: y = 0.721
-%     # --> if didn't get 2nd dose, ve drops from dose 1 ve to 0 after 52 weeks: y = -0.014x+0.777
-%     # --> if got 2nd dose, ve develop to dose 2 level between 4-6: y = 0.079x+0.405				
-%     #     --> ve gradually drops to 0 after 52 weeks: y = -0.017x + 0.986
-%
-%     # For immunocompromised individuals - 39% of PLWH (from 2022 LAC surveillance)
-%     # week 0-2: y = 0.255x
-%     # week 2-4: y = 0.51
-%     # --> if didn't get 2nd dose, ve drops from dose 1 ve to 0 after 52 weeks: y = -0.01x + 0.56
-%     # --> if got 2nd dose, ve develop to dose 2 level between 4-6: y = 0.096x + 0.126				
-%     #     --> ve gradually drops to 0 after 52 weeks: y = -0.014x + 0.786			
-    
-    if waning_ve == 0  % no waning ve       
-        plwh_vax1_id = hiv_status~=0 & vaccinated==1 & vax_wk>=2 & alive==1; 
-        plwh_vax2_id = hiv_status~=0 & vaccinated==2 & vax_wk>=6  & alive==1;
-        state_matrix(plwh_vax1_id, StateMatCols.ve) = vac1_plwh;
-        state_matrix(plwh_vax2_id, StateMatCols.ve) = vac2_plwh;
-        
-        normal_vax1_id = hiv_status==0 & vaccinated==1 & vax_wk>=2 & alive==1;
-        normal_vax2_id = hiv_status==0 & vaccinated==2 & vax_wk>=6 & alive==1;
-        state_matrix(normal_vax1_id, StateMatCols.ve) = vac1_normal;        
-        state_matrix(normal_vax2_id, StateMatCols.ve) = vac2_normal;
-    end
 
-    if waning_ve ~= 0    
-        % for immunocompetent individuals (now using plwh)
-        idx1 = hiv_status==0 & vaccinated==1 & vax_wk>=0 & vax_wk<=2 & alive==1;
-        idx2 = hiv_status==0 & vaccinated==1 & vax_wk>2 & vax_wk<=4 & alive==1;
-        idx3 = hiv_status==0 & vaccinated==1 & vax_wk>4 & alive==1; % if not getting 2nd dose
-        idx4 = hiv_status==0 & vaccinated==2 & vax_wk>=4 & vax_wk<=6 & alive==1; % if got 2nd dose
-
-        state_matrix(idx1, StateMatCols.ve) = 0.3605*vax_wk(idx1);
-        state_matrix(idx2, StateMatCols.ve) = 0.721;
-        state_matrix(idx3, StateMatCols.ve) = max(round(-0.014*vax_wk(idx3)+0.777, 3), 0); 
-        state_matrix(idx4, StateMatCols.ve) = max(round(0.079*vax_wk(idx4)+0.405, 3), 0);	
-
-        % for PLWH
-        idx1_plwh = hiv_status~=0 & vaccinated==1 & vax_wk>=0 & vax_wk<=2 & alive==1;
-        idx2_plwh = hiv_status~=0 & vaccinated==1 & vax_wk>2 & vax_wk<=4 & alive==1;
-        idx3_plwh = hiv_status~=0 & vaccinated==1 & vax_wk>4 & alive==1; % if not getting 2nd dose
-        idx4_plwh = hiv_status~=0 & vaccinated==2 & vax_wk>=4 & vax_wk<=6 & alive==1; % if got 2nd dose
-        
-        state_matrix(idx1_plwh, StateMatCols.ve) = 0.255*vax_wk(idx1_plwh);        
-        state_matrix(idx2_plwh, StateMatCols.ve) = 0.51;
-        state_matrix(idx3_plwh, StateMatCols.ve) = max(round(-0.01*vax_wk(idx3_plwh)+0.56, 3), 0); 
-        state_matrix(idx4_plwh, StateMatCols.ve) = max(round(0.096*vax_wk(idx4_plwh)+0.126, 3), 0);	
-        
-        if waning_ve == 2 % remian half of full ve after 12 months
-            idx5 = hiv_status==0 & vaccinated==2 & vax_wk>6 & vax_wk<=58 & alive==1;
-            idx6 = hiv_status==0 & vaccinated==2 & vax_wk>58 & alive==1;
-            idx7 = vaccinated==1 & vax_wk>56 & hiv_status==0 & alive==1;
-            idx5_plwh = hiv_status~=0 & vaccinated==2 & vax_wk>6 & vax_wk<=58 & alive==1;
-            idx6_plwh = hiv_status~=0 & vaccinated==2 & vax_wk>58 & alive==1;
-            idx7_plwh = vaccinated==1 & vax_wk>56 & hiv_status~=0 & alive==1;
-            
-            state_matrix(idx5, StateMatCols.ve) = max(round(-0.017*vax_wk(idx5)+0.986, 3),0);            
-            state_matrix(idx6, StateMatCols.ve) = 0.439;         
-            state_matrix(idx7, StateMatCols.ve) = 0.3605;
-            state_matrix(idx5_plwh, StateMatCols.ve) = max(round(-0.014*vax_wk(idx5_plwh) + 0.786, 3),0);
-            state_matrix(idx6_plwh, StateMatCols.ve) = 0.351;
-            state_matrix(idx7_plwh, StateMatCols.ve) = 0.255;
-            
-        elseif waning_ve == 1 % ve wanes to 0 after 12 months
-            idx5 = vaccinated==2 & vax_wk>6 & hiv_status==0 & alive==1;
-            idx6 = vaccinated==2 & vax_wk>58 & hiv_status==0 & alive==1;
-            idx7 = vaccinated==1 & vax_wk>56 & hiv_status==0 & alive==1;
-            idx5_plwh = vaccinated==2 & vax_wk>6 & hiv_status~=0 & alive==1;
-            idx6_plwh = vaccinated==2 & vax_wk>58 & hiv_status~=0 & alive==1;
-            idx7_plwh = vaccinated==1 & vax_wk>56 & hiv_status~=0 & alive==1;
-
-            state_matrix(idx5, StateMatCols.ve) = max(round(-0.017*vax_wk(idx5)+0.986, 3),0);      
-            state_matrix(idx6, StateMatCols.ve) = 0;   
-            state_matrix(idx7, StateMatCols.ve) = 0; 
-            state_matrix(idx5_plwh, StateMatCols.ve) = max(round(-0.014*vax_wk(idx5_plwh) + 0.786, 3),0);		         
-            state_matrix(idx6_plwh, StateMatCols.ve) = 0;
-            state_matrix(idx7_plwh, StateMatCols.ve) = 0;
-        end
-    end
-    
-    %%%%%%%%%%%%%%%%% assign time varying params %%%%%%%%%%%%%%%%%%%%%%    
-    % % Old FOI
-    % if t<=1
-    %     infectCalib_ = infectCalib_1;
-    % elseif t>=2 && t<=tweek
-    %     infectCalib_ = infectCalib_2;
-    % else
-    %     infectCalib_ = infectCalib_3;      
-    % end
-    infectCalib_ = foi;
-
-    % New FOI
-%     if weekly_foi==1 % weekly FOI
-%         if t>=1 && t<=4
-%             infectCalib_ = infectCalib_1;
-%         elseif t>=5 && t<=9
-%             infectCalib_ = infectCalib_2*2;
-%         elseif t>=10 && t<=13
-%             infectCalib_ = infectCalib_1; 
-%         elseif t==14
-%             infectCalib_ = infectCalib_2*2;
-%         elseif t==15
-%             infectCalib_ = infectCalib_1;  
-%         elseif t==16
-%             infectCalib_ = infectCalib_2*2; 
-%         elseif t==17
-%             infectCalib_ = infectCalib_1; 
-%         elseif t==18
-%             infectCalib_ = infectCalib_2*2; 
-%         elseif t>=19
-%             infectCalib_ = infectCalib_1; 
-%         end
-%     else % average out FOI
-%         if t>=1 && t<=5
-%             infectCalib_ = 1.48;%1.08;
-%         elseif t>=6 && t<=10
-%             infectCalib_ = 3.37;%1.77;
-%         elseif t>=11 && t<=15
-%             infectCalib_ = 1.48;%1.08; 
-%         elseif t>=16 && t<=20
-%             infectCalib_ = 2.11;%1.31;
-%         elseif t>=21
-%             infectCalib_ = 0.85;
-%         end
-%     end
-    
-    %%%%%%%%%%%%%%%%%%%%%%%%%% Policy %%%%%%%%%%%%%%%%%%%%%%%%%%%%%mo
-    if policy        
-        if strcmp(p, 'oct_half') % half force of infection on and after wk 14
-            if t<=6
-                infectCalib_ = infectCalib_6wks;
-            elseif t>6 && t<=13
-                infectCalib_ = infectCalib;
-            else
-                infectCalib_ = infectCalib_6wks/2;      
+    switch S
+        case 11 % S11: week 4 – 16 (Apr-Jun) and week 26 – 34 (Sept-Oct), FOI = 0.7 
+            if t>=4 && t<=16
+                foi = 0.7;
+            elseif t>=26 && t<=34
+                foi = 0.7; 
             end
-        end
-
-        if strcmp(p, 'oct_full') % full force of infection on and after wk 14
-            if t<=6
-                infectCalib_ = infectCalib_6wks;
-            elseif t>6 && t<=13
-                infectCalib_ = infectCalib;
-            else
-                infectCalib_ = infectCalib_6wks;      
+        case 15 % S15: For week 4 – 16 (Apr-Jun), FOI = 0.7
+            if t>=4 && t<=16
+                foi = 0.7;
             end
-        end
-    end 
+        case 16 % S16: For week 26 – 34 (Sept-Oct), FOI = 0.7
+            if t>=26 && t<=34
+                foi = 0.7; 
+            end
+        case 17 % S17: Randomly select 22 weeks with FoI = 0.7
+            selected_wks = randsample(1:T, 22);
+            if ismember(t, selected_wks)
+                foi = 0.7;
+            end
+        case 18 % S18: Randomly select 13 weeks with FoI = 0.7
+            selected_wks = randsample(1:T, 13);
+            if ismember(t, selected_wks)
+                foi = 0.7;
+            end
+        case 19 % S19: Randomly select 9 weeks with FoI = 0.7
+            selected_wks = randsample(1:T, 9);
+            if ismember(t, selected_wks)
+                foi = 0.7;
+            end
+    end
     
-    %%%%%%%%%%%%% 1. Update vax_wk and vax2_wk if vaccinated and alive %%%%%%%%%%%%%%%
+    %% %%%%%%%%%%%%%%%%%%%%%%%%% update ve  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Vaccine effectiveness (VE) follows a piecewise function based on:
+    % 1. HIV status (immunocompetent vs immunocompromised)
+    % 2. Vaccination status (1st vs 2nd dose)
+    % 3. Time since vaccination
+    % 4. Waning mode (0: no waning, 1: wane to 0, 2: maintain half VE)
+    % Resource: https://www.nejm.org/doi/full/10.1056/NEJMoa1817307
+    state_matrix = update_ve(state_matrix, StateMatCols, WANING_VE_MODE);
+    
+    %% %%%%%%%%%%% 1. Update vax_wk and vax2_wk if vaccinated and alive %%%%%%%%%%%%%%%
     % for people die at the end of the week vax_wk is updated here before they die
     % for new birth this week, their vax_wk is 0
     vax_wk_id = find(alive & vaccinated ~= 0);
@@ -290,41 +174,39 @@ for t = 1:T
     vax2_wk_id = find(alive & vaccinated == 2);
     state_matrix(vax2_wk_id, StateMatCols.vax2_wk) = state_matrix(vax2_wk_id, StateMatCols.vax2_wk)+1;
  
-    %%%%%%%%%%%%%%%% 2024 update: infection every week %%%%%%%%%%%%%%%%%%%%%
-   % % converting X people from sus to symptomatic every week starting from Jul 30 2023
-   %  infect_id = find(alive & pox_status==0);
-   %  infect_id = randsample(infect_id, 15);
-   %  state_matrix(infect_id, StateMatCols.pox_status) = 2;
-
-    % % converting X people from sus to symptomatic on week 42 (mid-May 2024)
-    % if t == 42
-    %     infect_id = find(alive & pox_status==0);
-    %     infect_id = randsample(infect_id, 500);
-    %     state_matrix(infect_id, StateMatCols.pox_status) = 2;
-    % end
-
-    % converting X people from sus to symptomatic according to import_wk and import_num
-    for wk = import_wk
-        if t == wk
+    %% %%%%%%%%%%%%%% 2024 update: importation %%%%%%%%%%%%%%%%%%%%%
+    if IMPORTATION_TYPE == 1
+        % converting X people from sus to symptomatic every week starting from Jul 30 2023
+        infect_id = find(alive==1 & pox_status==0);
+        infect_id = randsample(infect_id, const_import_num);
+        state_matrix(infect_id, StateMatCols.pox_status) = 2;
+        state_matrix(infect_id, StateMatCols.pox_aware) = 1;
+    elseif IMPORTATION_TYPE == 2
+        % converting X people from sus to symptomatic according to import_wk and import_num
+        for wk = import_wk
+            if t == wk
             tmp_i = find(t == import_wk);
             infect_id = find(alive==1 & pox_status==0);
             infect_id = randsample(infect_id, import_num(tmp_i));
             state_matrix(infect_id, StateMatCols.pox_status) = 2;
             state_matrix(infect_id, StateMatCols.pox_aware) = 1;
+            end
         end
-    end 
+    end
     
+    % Store initial state for tracking
     alive_beginning = state_matrix(:, StateMatCols.alive);
     pox_status_beginning = state_matrix(:, StateMatCols.pox_status);
     infectious_wks_beginning = state_matrix(:, StateMatCols.infectious_wks);
-    %%%%%%%%%%%%%%%%%%%%%%%%%% 2. New births %%%%%%%%%%%%%%%%%%%%%%%%
-    % a bunch of 14 year-old enter the model
+    
+    %% %%%%%%%%%%%%%%%%%%%%%%%% 2. New births %%%%%%%%%%%%%%%%%%%%%%%%
+    % Some 14 year-old enter the model
     [state_matrix, birthTally] = birth2(state_matrix, StateMatCols, age_def, race_def, race_prop, inflow);
     
     % update columns from the state matrix
     alive = state_matrix(:, StateMatCols.alive);
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%% 3. INFECTION %%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% %%%%%%%%%%%%%%%%%%%%%%% 3. Mpox INFECTION %%%%%%%%%%%%%%%%%%%%%%%%%
     % create a state matrix copy to do infections because we want newly infected people 
     % start to infect others in the next time period (not this time period).
     state_matrix_bfInfected = state_matrix;
@@ -343,7 +225,7 @@ for t = 1:T
         [state_matrix, infectionTallytmp] = infection9(demog_group_def, DemogTblCols,...
                                     mixing_matrix, mixing_table, ...
                                     MixingTblCols, state_matrix, StateMatCols, ...
-                                    numPartners, infectCalib_, hivInfect,...
+                                    numPartners, foi, hivInfect,...
                                     youngInfect, midInfect,...
                                     oldInfect, raceInfect, ...
                                     isolation_adherence);
@@ -352,7 +234,7 @@ for t = 1:T
         infectionTally = infectionTally + infectionTallytmp;
     end
     
-    % people newly to infection
+    % Track new infections by demographic
     new_infect = unique(find(state_matrix_bfInfected(:,StateMatCols.pox_status)~=state_matrix(:, StateMatCols.pox_status)));
     
     % number of people do not infect any new people
@@ -383,108 +265,14 @@ for t = 1:T
     avg_infectious_wks = mean(infectious_wks_beginning(alive_beginning==1 & pox_status_beginning==2));
     r_t = infected_per_infectious * avg_infectious_wks; 
 
-    %%%%%%%%%%%%%%%%%%%% vaccination under policies %%%%%%%%%%%%%%%%%%%%%% 
+    %% %%%%%%%%%%%%%%%%%% vaccination under policies %%%%%%%%%%%%%%%%%%%%%% 
     % 95% of people aware of their pox status and asymp will be prioritized getting vax1
     vax1_pri = find(state_matrix(:,StateMatCols.alive)==1 &...
                  state_matrix(:,StateMatCols.pox_status)==1 &...
                  state_matrix(:,StateMatCols.vaccinated)==0 &...
                  state_matrix(:,StateMatCols.pox_aware)==1);
-                 
-    if strcmp(p, 'vax12') % fixed vax size, all for PLWH
-        % find those eligible for 1st dose        
-        vax1_eligible_Ind = find(state_matrix(:,StateMatCols.alive)==1 &...
-                     state_matrix(:,StateMatCols.hiv_aware)==1 &...
-                     state_matrix(:,StateMatCols.vaccinated)==0 &...
-                     state_matrix(:,StateMatCols.pox_aware)==0);
-        vax1_other_eligible_Ind = find(state_matrix(:,StateMatCols.alive)==1 &...
-                     state_matrix(:,StateMatCols.hiv_aware)~=1 &...
-                     state_matrix(:,StateMatCols.vaccinated)==0 &...
-                     state_matrix(:,StateMatCols.pox_aware)==0);
 
-    elseif strcmp(p, 'vax13') % fixed vax size, all for Black
-        % find those eligible for 1st dose
-        % note that here we don't consider people aware of their pox status
-        vax1_eligible_Ind = find(state_matrix(:,StateMatCols.alive)==1 &...
-                     state_matrix(:,StateMatCols.race)==0 &...
-                     state_matrix(:,StateMatCols.vaccinated)==0 &...
-                     state_matrix(:,StateMatCols.pox_aware)==0);
-        vax1_other_eligible_Ind = find(state_matrix(:,StateMatCols.alive)==1 &...
-                     state_matrix(:,StateMatCols.race)~=0 &...
-                     state_matrix(:,StateMatCols.vaccinated)==0 &...
-                     state_matrix(:,StateMatCols.pox_aware)==0);
-
-    elseif strcmp(p, 'vax14') % fixed vax size, all for Hispanic
-        % find those eligible for 1st dose
-        % note that here we don't consider people aware of their pox status
-        vax1_eligible_Ind = find(state_matrix(:,StateMatCols.alive)==1 &...
-                     state_matrix(:,StateMatCols.race)==1 &...
-                     state_matrix(:,StateMatCols.vaccinated)==0 &...
-                     state_matrix(:,StateMatCols.pox_aware)==0);
-        vax1_other_eligible_Ind = find(state_matrix(:,StateMatCols.alive)==1 &...
-                     state_matrix(:,StateMatCols.race)~=1 &...
-                     state_matrix(:,StateMatCols.vaccinated)==0 &...
-                     state_matrix(:,StateMatCols.pox_aware)==0);
-
-    elseif strcmp(p, 'vax15') % fixed vax size, all for White
-        % find those eligible for 1st dose
-        % note that here we don't consider people aware of their pox status
-        vax1_eligible_Ind = find(state_matrix(:,StateMatCols.alive)==1 &...
-                     state_matrix(:,StateMatCols.race)==2 &...
-                     state_matrix(:,StateMatCols.vaccinated)==0 &...
-                     state_matrix(:,StateMatCols.pox_aware)==0);
-        vax1_other_eligible_Ind = find(state_matrix(:,StateMatCols.alive)==1 &...
-                     state_matrix(:,StateMatCols.race)~=2 &...
-                     state_matrix(:,StateMatCols.vaccinated)==0 &...
-                     state_matrix(:,StateMatCols.pox_aware)==0);
-    end
-
-    % run the following block only if one of above vax policies selected
-    if sum(strcmp(p, {'vax12', 'vax13', 'vax14', 'vax15'}))>0 
-        
-        % prioritize people asypm and aware their pox status to get vax1
-        vax1_pri_size = round(length(vax1_pri)*0.95);    
-        % if the pri size is greater than the fixed size, then set it
-        % equals to the fixed size since it should not exceed it
-        if vax1_pri_size > vax1_size(t)  
-            vax1_pri_size = vax1_size(t);
-        end
-        vax1_pri_ind = randsample(vax1_pri, vax1_pri_size);
-        
-        % update fixed vax1 size at time t for others
-        vax1_size(t) = vax1_size(t) - vax1_pri_size;
-        
-        % randomly select people to be vaccinated (1st dose)
-        % vax size is the same as in sq
-        size_diff = vax1_size(t) - length(vax1_eligible_Ind);    
-        % if more fixed vax1 left, equally distribute them to other groups
-        if size_diff > 0 
-            vax1_Ind = [vax1_pri_ind;...
-                        vax1_eligible_Ind;...
-                        randsample(vax1_other_eligible_Ind, size_diff)]; 
-        else
-            vax1_Ind = [vax1_pri_ind;...
-                        randsample(vax1_eligible_Ind, vax1_size(t))];                    
-        end
-
-        state_matrix(vax1_Ind, StateMatCols.vaccinated) = 1;
-        % find those eligible for 2nd dose
-        vax2_eligible_Ind = find(state_matrix(:,StateMatCols.alive)==1 &...
-                     state_matrix(:,StateMatCols.vax_wk)>=4 &...
-                     state_matrix(:,StateMatCols.vax_wk)<=6 &...
-                     state_matrix(:,StateMatCols.vaccinated)==1 &...
-                     state_matrix(:,StateMatCols.pox_aware)==0);
-        % randomly select people to be vaccinated (12nd dose)
-        % vax size is the same as in sq
-        vax2_Ind = randsample(vax2_eligible_Ind, vax2_size(t));            
-        state_matrix(vax2_Ind, StateMatCols.vaccinated) = 2;
-
-        % tally for all the demographic groups summed for this week
-        vac1Tally = vac1Tally + length(vax1_Ind);
-        vac2Tally = vac2Tally + length(vax2_Ind);
-        vacTally = vac1Tally+ vac2Tally;
-    end
-    
-    %%%%%%%%%%%%%%%%%%%% For each demographic group %%%%%%%%%%%%%%%%%%%%%%
+    %% %%%%%%%%%%%%%%%%%% For each demographic group %%%%%%%%%%%%%%%%%%%%%%
     for demog_group_def = demog_table.'
         
         % Get state matrix row indices for people in this demographic group
@@ -502,28 +290,26 @@ for t = 1:T
         awareTally1 = awareTally1 + awareTally1tmp;     
         awareTally2 = awareTally2 + awareTally2tmp;  
 
-        %%%%%%%%%%%%%%%%%%%%%%%% 5. vaccination %%%%%%%%%%%%%%%%%%%%%%%%
+        %% %%%%%%%%%%%%%%%%%%%%%% 5. vaccination %%%%%%%%%%%%%%%%%%%%%%%%
         % mpox vaccine requires 2 doses, vaccinated = 1 or 2        
-        % run this block only if one of the above vax policies (12-15) are not selected
-        if ~strcmp(p, {'vax12', 'vax13', 'vax14', 'vax15'})  % regular situation                
-            % those sus or asymptomatic can be vaccinated (1st dose)
-            % the aware asym and unaware asym have different prob of vaccinated
-            [state_matrix, vac1Tallytmp] = transition5('vaccinated', vac1_transition_path, ...
-                                        state_matrix, StateMatCols, demog_group_idx, ...
-                                        future_state_param_names, 1);
+        % run this block only if one of the above vax policies (12-15) are not selected            
+        % those sus or asymptomatic can be vaccinated (1st dose)
+        % the aware asym and unaware asym have different prob of vaccinated
+        [state_matrix, vac1Tallytmp] = transition5('vaccinated', vac1_transition_path, ...
+                                    state_matrix, StateMatCols, demog_group_idx, ...
+                                    future_state_param_names, 1);
 
-            % people get 1st dose will get their 2nd dose on the 4th week       
-            [state_matrix, vac2Tallytmp] = transition5('vaccinated', vac2_transition_path, ...
-                                        state_matrix, StateMatCols, demog_group_idx, ...
-                                        future_state_param_names, 1);
+        % people get 1st dose will get their 2nd dose on the 4th week       
+        [state_matrix, vac2Tallytmp] = transition5('vaccinated', vac2_transition_path, ...
+                                    state_matrix, StateMatCols, demog_group_idx, ...
+                                    future_state_param_names, 1);
 
-            % tally for all the demographic groups summed for this week
-            vac1Tally = vac1Tally + vac1Tallytmp;
-            vac2Tally = vac2Tally + vac2Tallytmp;
-            vacTally = vac1Tally+ vac2Tally;
-        end
+        % tally for all the demographic groups summed for this week
+        vac1Tally = vac1Tally + vac1Tallytmp;
+        vac2Tally = vac2Tally + vac2Tallytmp;
+        vacTally = vac1Tally+ vac2Tally;
         
-        %%%%%%%%%%%%%%%%%%%%%%%% 6. pox status %%%%%%%%%%%%%%%%%%%%%%%%
+        %% %%%%%%%%%%%%%%%%%%%%%% 6. pox status %%%%%%%%%%%%%%%%%%%%%%%%
         % transit from asymptomatic to recover if vaccinated within a week
         % only people infected and vaccinated this week have chances to recover
         % for these people, vaccinated=1 and vax_wk=0
@@ -563,7 +349,7 @@ for t = 1:T
         asym2symTally = asym2symTally + asym2symTallytmp; 
         sym2recoverTally = sym2recoverTally + sym2recoverTallytmp;
    
-        %%%%%%%%%%%%%%%%%%%%%%%%%% 7. treatment %%%%%%%%%%%%%%%%%%%%%%%%%%
+        %% %%%%%%%%%%%%%%%%%%%%%%%% 7. treatment %%%%%%%%%%%%%%%%%%%%%%%%%%
         % people symptomatic and aware have the chance to start treatment
         % treatment and isolation status are independent
         
@@ -593,7 +379,7 @@ for t = 1:T
         % tally for all the demographic groups summed for this week
         ontrtTally = ontrtTally + ontrtTallytmp;     
         
-        %%%%%%%%%%%%%%%%%%%%%%%%%% 8. isolation %%%%%%%%%%%%%%%%%%%%%%%%%%
+        %% %%%%%%%%%%%%%%%%%%%%%%%% 8. isolation %%%%%%%%%%%%%%%%%%%%%%%%%%
         % people that are aware of their status have chance to isolate 
         % isolation continues until recovered
         
@@ -687,7 +473,7 @@ for t = 1:T
     vax_a4 = vax1_a4 + vax2_a4;
     vax_a5 = vax1_a5 + vax2_a5;
        
-    %%%%%%%%%%%%%%%%%%%%%%%%%% 8. AGING %%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% %%%%%%%%%%%%%%%%%%%%%%%% 8. AGING %%%%%%%%%%%%%%%%%%%%%%%%%%
     % if 52 weeks, add a year-age, and clear up the weekly age
     agw_wk_is52_id = find(state_matrix(:, StateMatCols.age_wk)==52);
     age_bucket_id = find(ismember(state_matrix(agw_wk_is52_id, StateMatCols.age), [29, 39, 49, 59]));
@@ -701,7 +487,7 @@ for t = 1:T
     % Add a week to alive MSM's weekly age
     state_matrix(find(alive==1), StateMatCols.age_wk) = state_matrix(find(alive==1), StateMatCols.age_wk) + 1;
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%% 9. Death %%%%%%%%%%%%%%%%%%%%%%%%%%
+    %% %%%%%%%%%%%%%%%%%%%%%%%% 9. Death %%%%%%%%%%%%%%%%%%%%%%%%%%
     % do this at end, want deaths happen after everything
     % For each demographic group
     for demog_group_def = demog_table.'      
@@ -737,53 +523,66 @@ for t = 1:T
     race = state_matrix(:, StateMatCols.race);
     ve = state_matrix(:, StateMatCols.ve);
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%% HIV INFECTION %%%%%%%%%%%%%%%%%%%%%%%%%%
-    % assign people from HIV- to HIV+ every week
-    %           15-29   30-49   50-64   65+
-    % Black      3      3       2       1
-    % Hispanic   6      7       5       2
-    % White      2      2       2       1
-    hiv_b_a1 = randsample(find(alive==1 & hiv_status==0 & race==0 & hiv_age_bucket==1), 3);
-    hiv_b_a2 = randsample(find(alive==1 & hiv_status==0 & race==0 & hiv_age_bucket==2), 3);
-    hiv_b_a3 = randsample(find(alive==1 & hiv_status==0 & race==0 & hiv_age_bucket==3), 2);
-    hiv_b_a4 = randsample(find(alive==1 & hiv_status==0 & race==0 & hiv_age_bucket==4), 1);
-    hiv_h_a1 = randsample(find(alive==1 & hiv_status==0 & race==1 & hiv_age_bucket==1), 6);
-    hiv_h_a2 = randsample(find(alive==1 & hiv_status==0 & race==1 & hiv_age_bucket==2), 7);
-    hiv_h_a3 = randsample(find(alive==1 & hiv_status==0 & race==1 & hiv_age_bucket==3), 5);
-    hiv_h_a4 = randsample(find(alive==1 & hiv_status==0 & race==1 & hiv_age_bucket==4), 2);
-    hiv_w_a1 = randsample(find(alive==1 & hiv_status==0 & race==2 & hiv_age_bucket==1), 2);
-    hiv_w_a2 = randsample(find(alive==1 & hiv_status==0 & race==2 & hiv_age_bucket==2), 2);
-    hiv_w_a3 = randsample(find(alive==1 & hiv_status==0 & race==2 & hiv_age_bucket==3), 2);
-    hiv_w_a4 = randsample(find(alive==1 & hiv_status==0 & race==2 & hiv_age_bucket==4), 1);
+    %% %%%%%%%%%%%%%%%%%%%%%%%% HIV Dynamics %%%%%%%%%%%%%%%%%%%%%%%%%%
+    % Count for HIV infection
+    % Format: [Black, Hispanic, White] for each age group
+    hiv_infection_rates = [
+        3, 6, 2;  % 15-29
+        3, 7, 2;  % 30-49
+        2, 5, 2;  % 50-64
+        1, 2, 1   % 65+
+    ];
     
-    hiv_id = [hiv_b_a1; hiv_b_a2; hiv_b_a3; hiv_b_a4;...
-        hiv_h_a1; hiv_h_a2; hiv_h_a3; hiv_h_a4;...
-        hiv_w_a1; hiv_w_a2; hiv_w_a3; hiv_w_a4];
+    % Count for HIV awareness
+    % Format: [Black, Hispanic, White] for each age group
+    hiv_awareness_rates = [
+        2, 5, 2;  % 15-29
+        3, 7, 3;  % 30-49
+        2, 4, 2;  % 50-64
+        0, 1, 0   % 65+
+    ];
     
-    state_matrix(hiv_id, StateMatCols.hiv_status) = 1;
+    % Initialize arrays to store IDs
+    hiv_infection_ids = [];
+    hiv_awareness_ids = [];
     
-    %%%%%%%%%%%%%%%%%%%%%%%%%% HIV Aware %%%%%%%%%%%%%%%%%%%%%%%%%%
-    % assign people from HIV- to HIV+ every week
-    %           15-29   30-49   50-64   65+
-    % Black      2      3       2       0
-    % Hispanic   5      7       4       1
-    % White      2      3       2       0
-    hiv_aware_b_a1 = randsample(find(alive==1 & hiv_status~=0 & hiv_aware==0 & race==0 & hiv_age_bucket==1), 2);
-    hiv_aware_b_a2 = randsample(find(alive==1 & hiv_status~=0 & hiv_aware==0 & race==0 & hiv_age_bucket==2), 3);
-    hiv_aware_b_a3 = randsample(find(alive==1 & hiv_status~=0 & hiv_aware==0 & race==0 & hiv_age_bucket==3), 2);
-    hiv_aware_h_a1 = randsample(find(alive==1 & hiv_status~=0 & hiv_aware==0 & race==1 & hiv_age_bucket==1), 5);
-    hiv_aware_h_a2 = randsample(find(alive==1 & hiv_status~=0 & hiv_aware==0 & race==1 & hiv_age_bucket==2), 7);
-    hiv_aware_h_a3 = randsample(find(alive==1 & hiv_status~=0 & hiv_aware==0 & race==1 & hiv_age_bucket==3), 4);
-    hiv_aware_h_a4 = randsample(find(alive==1 & hiv_status~=0 & hiv_aware==0 & race==1 & hiv_age_bucket==4), 1);
-    hiv_aware_w_a1 = randsample(find(alive==1 & hiv_status~=0 & hiv_aware==0 & race==2 & hiv_age_bucket==1), 2);
-    hiv_aware_w_a2 = randsample(find(alive==1 & hiv_status~=0 & hiv_aware==0 & race==2 & hiv_age_bucket==2), 3);
-    hiv_aware_w_a3 = randsample(find(alive==1 & hiv_status~=0 & hiv_aware==0 & race==2 & hiv_age_bucket==3), 2);
+    % Process HIV infections
+    for age_group = 1:4
+        for race = 0:2
+            % Get the number of new infections for this demographic
+            num_infections = hiv_infection_rates(age_group, race + 1);
+            if num_infections > 0
+                % Find eligible individuals
+                eligible_ids = find(alive==1 & hiv_status==0 & race==race & hiv_age_bucket==age_group);
+                if ~isempty(eligible_ids)
+                    % Randomly select individuals to infect
+                    selected_ids = randsample(eligible_ids, min(num_infections, length(eligible_ids)));
+                    hiv_infection_ids = [hiv_infection_ids; selected_ids];
+                end
+            end
+        end
+    end
     
-    hiv_aware_id = [hiv_aware_b_a1; hiv_aware_b_a2; hiv_aware_b_a3;...
-        hiv_aware_h_a1; hiv_aware_h_a2; hiv_aware_h_a3; hiv_aware_h_a4;...
-        hiv_aware_w_a1; hiv_aware_w_a2; hiv_aware_w_a3];
+    % Process HIV awareness
+    for age_group = 1:4
+        for race = 0:2
+            % Get the number of new awareness cases for this demographic
+            num_aware = hiv_awareness_rates(age_group, race + 1);
+            if num_aware > 0
+                % Find eligible individuals
+                eligible_ids = find(alive==1 & hiv_status~=0 & hiv_aware==0 & race==race & hiv_age_bucket==age_group);
+                if ~isempty(eligible_ids)
+                    % Randomly select individuals to make aware
+                    selected_ids = randsample(eligible_ids, min(num_aware, length(eligible_ids)));
+                    hiv_awareness_ids = [hiv_awareness_ids; selected_ids];
+                end
+            end
+        end
+    end
     
-    state_matrix(hiv_aware_id, StateMatCols.hiv_aware) = 1;
+    % Apply HIV infections and awareness
+    state_matrix(hiv_infection_ids, StateMatCols.hiv_status) = 1;
+    state_matrix(hiv_awareness_ids, StateMatCols.hiv_aware) = 1;
     
     %%%%%%%%%%%%%%% turn off treatment if recovered %%%%%%%%%%%%%%%%%%%%%%
     % find those recovered but trt is still on
@@ -821,7 +620,7 @@ for t = 1:T
 %     csvwrite_with_headers([matrix_nsame, '.csv'], state_matrix, fieldnames(StateMatCols))
     save(matrix_name, 'state_matrix');
 
-    % a vector for all tally
+    % Update weekly tallies
     tally(t+1,:) = [t, birthTally, infectionTally, infected_per_infectious,...
             r_t, max(infectious_wks),...
             infect_hiv, infect_vax1, infect_vax2,...
@@ -867,14 +666,335 @@ for t = 1:T
 
 end
 
-%%%%%%%%%%%%%%%%%%%%%%%%%% SAVE Tally %%%%%%%%%%%%%%%%%%%%%%%%%%
+%% %%%%%%%%%%%%%%%%%%%%%%%% SAVE Tally %%%%%%%%%%%%%%%%%%%%%%%%%%
 matrix_name = [state_matrices_path,'Tally_',char(testVersion)];
 tally_tbl = array2table(tally);
 tally_tbl.Properties.VariableNames(1:end) = tallyHeaders;
 writetable(tally_tbl, [matrix_name, '.csv'])
 
+% Create memo file with scenario information
+create_scenario_memo(S, testVerDir, iso_transition_path, foi);
 
+%% %%%%%%%%%%%%%%%%%%%%%%%% Helper Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function state_matrix = update_ve(state_matrix, StateMatCols, WANING_VE_MODE)
+    % UPDATE_VE Updates vaccine effectiveness based on various factors
+    %   Updates vaccine effectiveness (VE) based on:
+    %   1. HIV status (immunocompetent vs immunocompromised)
+    %   2. Vaccination status (1st vs 2nd dose)
+    %   3. Time since vaccination
+    %   4. Waning mode (0: no waning, 1: wane to 0, 2: maintain half VE)
+    %
+    %   Inputs:
+    %   - state_matrix: Current state matrix
+    %   - StateMatCols: Structure containing column indices
+    %   - WANING_VE_MODE: Mode for VE waning (0, 1, or 2)
+    %
+    %   Output:
+    %   - state_matrix: Updated state matrix with new VE values
+    %
+    % For immunocompetent individuals:
+    % - One dose VE = 0.721, two doses VE = 0.878
+    % - Week 0-2: Linear increase (y = 0.3605x)
+    % - Week 2-4: Plateau at one dose VE (0.721)
+    % - If no 2nd dose: Linear decline to 0 over 52 weeks (y = -0.014x + 0.777)
+    % - If 2nd dose: Linear increase to full VE (y = 0.079x + 0.405)
+    %   Then linear decline based on waning mode
+    %
+    % For immunocompromised (PLWH):
+    % - One dose VE = 0.51, two doses VE = 0.702
+    % - Week 0-2: Linear increase (y = 0.255x)
+    % - Week 2-4: Plateau at one dose VE (0.51)
+    % - If no 2nd dose: Linear decline to 0 over 52 weeks (y = -0.01x + 0.56)
+    % - If 2nd dose: Linear increase to full VE (y = 0.096x + 0.126)
+    %   Then linear decline based on waning mode
 
+    % Extract relevant columns
+    alive = state_matrix(:, StateMatCols.alive);
+    hiv_status = state_matrix(:, StateMatCols.hiv_status);
+    vaccinated = state_matrix(:, StateMatCols.vaccinated);
+    vax_wk = state_matrix(:, StateMatCols.vax_wk);
 
+    % Constants for VE calculations
+    vac1_plwh = 0.51;  % One dose VE for PLWH
+    vac2_plwh = 0.702; % Two doses VE for PLWH
+    vac1_normal = 0.721; % One dose VE for immunocompetent
+    vac2_normal = 0.878; % Two doses VE for immunocompetent
+
+    if WANING_VE_MODE == 0  % No waning VE
+        % Set constant VE for PLWH and non-PLWH based on vaccination status      
+        plwh_vax1_id = hiv_status~=0 & vaccinated==1 & vax_wk>=2 & alive==1; 
+        plwh_vax2_id = hiv_status~=0 & vaccinated==2 & vax_wk>=6  & alive==1;
+        state_matrix(plwh_vax1_id, StateMatCols.ve) = vac1_plwh;
+        state_matrix(plwh_vax2_id, StateMatCols.ve) = vac2_plwh;
+        
+        normal_vax1_id = hiv_status==0 & vaccinated==1 & vax_wk>=2 & alive==1;
+        normal_vax2_id = hiv_status==0 & vaccinated==2 & vax_wk>=6 & alive==1;
+        state_matrix(normal_vax1_id, StateMatCols.ve) = vac1_normal;        
+        state_matrix(normal_vax2_id, StateMatCols.ve) = vac2_normal;
+    else
+        % Update VE for immunocompetent individuals
+        % Week 0-2: Linear increase
+        idx1 = hiv_status==0 & vaccinated==1 & vax_wk>=0 & vax_wk<=2 & alive==1;
+        % Week 2-4: Plateau at one dose VE
+        idx2 = hiv_status==0 & vaccinated==1 & vax_wk>2 & vax_wk<=4 & alive==1;
+        % No 2nd dose: Linear decline
+        idx3 = hiv_status==0 & vaccinated==1 & vax_wk>4 & alive==1;
+        % Got 2nd dose: Linear increase to full VE
+        idx4 = hiv_status==0 & vaccinated==2 & vax_wk>=4 & vax_wk<=6 & alive==1;
+
+        state_matrix(idx1, StateMatCols.ve) = 0.3605 * vax_wk(idx1);
+        state_matrix(idx2, StateMatCols.ve) = vac1_normal;
+        state_matrix(idx3, StateMatCols.ve) = max(round(-0.014 * vax_wk(idx3) + 0.777, 3), 0); 
+        state_matrix(idx4, StateMatCols.ve) = max(round(0.079 * vax_wk(idx4) + 0.405, 3), 0);	
+
+        % Update VE for PLWH
+        % Week 0-2: Linear increase
+        idx1_plwh = hiv_status~=0 & vaccinated==1 & vax_wk>=0 & vax_wk<=2 & alive==1;
+        % Week 2-4: Plateau at one dose VE
+        idx2_plwh = hiv_status~=0 & vaccinated==1 & vax_wk>2 & vax_wk<=4 & alive==1;
+        % No 2nd dose: Linear decline
+        idx3_plwh = hiv_status~=0 & vaccinated==1 & vax_wk>4 & alive==1;
+        % Got 2nd dose: Linear increase to full VE
+        idx4_plwh = hiv_status~=0 & vaccinated==2 & vax_wk>=4 & vax_wk<=6 & alive==1;
+        
+        state_matrix(idx1_plwh, StateMatCols.ve) = 0.255 * vax_wk(idx1_plwh);        
+        state_matrix(idx2_plwh, StateMatCols.ve) = vac1_plwh;
+        state_matrix(idx3_plwh, StateMatCols.ve) = max(round(-0.01 * vax_wk(idx3_plwh) + 0.56, 3), 0); 
+        state_matrix(idx4_plwh, StateMatCols.ve) = max(round(0.096 * vax_wk(idx4_plwh) + 0.126, 3), 0);	
+        
+        % Handle long-term VE waning based on mode
+        if WANING_VE_MODE == 2 % Maintain half VE after 12 months
+            % Immunocompetent individuals
+            idx5 = hiv_status==0 & vaccinated==2 & vax_wk>6 & vax_wk<=58 & alive==1;
+            idx6 = hiv_status==0 & vaccinated==2 & vax_wk>58 & alive==1;
+            idx7 = vaccinated==1 & vax_wk>56 & hiv_status==0 & alive==1;
+            
+            % PLWH
+            idx5_plwh = hiv_status~=0 & vaccinated==2 & vax_wk>6 & vax_wk<=58 & alive==1;
+            idx6_plwh = hiv_status~=0 & vaccinated==2 & vax_wk>58 & alive==1;
+            idx7_plwh = vaccinated==1 & vax_wk>56 & hiv_status~=0 & alive==1;
+            
+            % Apply waning with half VE maintenance
+            state_matrix(idx5, StateMatCols.ve) = max(round(-0.017 * vax_wk(idx5) + 0.986, 3), 0);            
+            state_matrix(idx6, StateMatCols.ve) = vac2_normal/2;         
+            state_matrix(idx7, StateMatCols.ve) = vac1_normal/2;
+            state_matrix(idx5_plwh, StateMatCols.ve) = max(round(-0.014 * vax_wk(idx5_plwh) + 0.786, 3), 0);
+            state_matrix(idx6_plwh, StateMatCols.ve) = vac2_plwh/2;
+            state_matrix(idx7_plwh, StateMatCols.ve) = vac1_plwh/2;
+            
+        elseif WANING_VE_MODE == 1 % VE wanes to 0 after 12 months
+            % Immunocompetent individuals
+            idx5 = vaccinated==2 & vax_wk>6 & hiv_status==0 & alive==1;
+            idx6 = vaccinated==2 & vax_wk>58 & hiv_status==0 & alive==1;
+            idx7 = vaccinated==1 & vax_wk>56 & hiv_status==0 & alive==1;
+            
+            % PLWH
+            idx5_plwh = vaccinated==2 & vax_wk>6 & hiv_status~=0 & alive==1;
+            idx6_plwh = vaccinated==2 & vax_wk>58 & hiv_status~=0 & alive==1;
+            idx7_plwh = vaccinated==1 & vax_wk>56 & hiv_status~=0 & alive==1;
+
+            % Apply waning to 0
+            state_matrix(idx5, StateMatCols.ve) = max(round(-0.017 * vax_wk(idx5) + 0.986, 3), 0);      
+            state_matrix(idx6, StateMatCols.ve) = 0;   
+            state_matrix(idx7, StateMatCols.ve) = 0; 
+            state_matrix(idx5_plwh, StateMatCols.ve) = max(round(-0.014 * vax_wk(idx5_plwh) + 0.786, 3), 0);		         
+            state_matrix(idx6_plwh, StateMatCols.ve) = 0;
+            state_matrix(idx7_plwh, StateMatCols.ve) = 0;
+        end
+    end
+end
+
+function [IMPORTATION_TYPE, iso_transition_path, foi, const_import_num] = set_scenario_parameters(S)
+    % SET_SCENARIO_PARAMETERS Sets parameters based on scenario number
+    % Inputs:
+    %   S - Scenario number
+    %   t - Current time step
+    % Outputs:
+    %   IMPORTATION_TYPE - Type of importation (0: none, 1: constant, 2: scheduled)
+    %   iso_transition_path - Path to isolation transition file
+    %   foi - Force of infection value
+    %   const_import_num - Number of constant imports (only used for IMPORTATION_TYPE=1)
+    
+    % Initialize default values
+    iso_transition_path = '../input/isolationOn_0.2.csv';
+    foi = 0.7;
+    const_import_num = 0;
+    
+    % Scenario groups
+    no_const_import_scenarios = [0, 8, 9, 10];
+    phylo_import_scenarios = [1:7, 12:14, 20:22];
+    
+    if ismember(S, no_const_import_scenarios)
+        % No importation or constant importation scenarios
+        if S == 0
+            % Baseline scenario
+            IMPORTATION_TYPE = 0;
+        else
+            % Constant importation scenarios
+            IMPORTATION_TYPE = 1;
+            switch S
+                case 8
+                    const_import_num = 5;
+                case 9
+                    const_import_num = 10;
+                case 10
+                    const_import_num = 15;
+            end
+        end
+        
+    elseif ismember(S, phylo_import_scenarios)
+        % Importation scenarios with varying isolation and FOI
+        IMPORTATION_TYPE = 2;
+        
+        % Set isolation and FOI based on scenario
+        switch S
+            case 1
+                iso_transition_path = '../input/isolationOn_0.5.csv';
+                foi = 0.7;
+            case 2
+                iso_transition_path = '../input/isolationOn_0.5.csv';
+                foi = 1.45;
+            case 3
+                iso_transition_path = '../input/isolationOn_0.5.csv';
+                foi = 2.2;
+            case 4
+                iso_transition_path = '../input/isolationOn_0.4.csv';
+                foi = 2.2;
+            case 5
+                iso_transition_path = '../input/isolationOn_0.3.csv';
+                foi = 2.2;
+            case 6
+                iso_transition_path = '../input/isolationOn_0.2.csv';
+                foi = 2.2;
+            case 7
+                iso_transition_path = '../input/isolationOn_0.csv';
+                foi = 2.2;
+            case 12
+                iso_transition_path = '../input/isolationOn_0.2.csv';
+                foi = 1.45;
+            case 13
+                iso_transition_path = '../input/isolationOn_0.2.csv';
+                foi = 0.7;
+            case 14
+                iso_transition_path = '../input/isolationOn_0.8.csv';
+                foi = 2.2;
+            case 20
+                iso_transition_path = '../input/isolationOn_0.2.csv';
+                foi = 1.6;
+            case 21
+                iso_transition_path = '../input/isolationOn_0.2.csv';
+                foi = 1.8;
+            case 22
+                iso_transition_path = '../input/isolationOn_0.2.csv';
+                foi = 2.0;
+        end
+    else % S11, S15-S19
+        IMPORTATION_TYPE = 2;
+        foi = 2.2; % Default FOI
+        iso_transition_path = '../input/isolationOn_0.2.csv';
+    end
+end
+
+function create_scenario_memo(S, testVerDir, iso_transition_path, foi)
+    % Create a memo file with scenario information
+    % Inputs:
+    %   S - Scenario number
+    %   testVerDir - Simulation output directory
+    %   iso_transition_path - Path to isolation transition file
+    %   foi - Force of infection value
+    
+    % Create memo file path
+    memo_path = fullfile(testVerDir, 'memo.txt');
+    
+    % Open file for writing
+    fid = fopen(memo_path, 'w');
+    
+    % Write scenario information
+    fprintf(fid, 'Scenario Information\n');
+    fprintf(fid, '===================\n\n');
+    fprintf(fid, 'Scenario Number: %d\n', S);
+    fprintf(fid, 'Output Directory: %s\n', testVerDir);
+    fprintf(fid, 'Isolation Transition Path: %s\n', iso_transition_path);
+    fprintf(fid, 'Force of Infection: %.2f\n\n', foi);
+    
+    % Add detailed scenario description based on scenario number
+    fprintf(fid, 'Scenario Description:\n');
+    
+    if S == 0
+        fprintf(fid, 'Baseline scenario with no importation\n');
+        fprintf(fid, '- Standard isolation (0.2)\n');
+        fprintf(fid, '- Constant FOI = 0.7\n');
+    elseif S >= 8 && S <= 10
+        fprintf(fid, 'Constant importation scenario\n');
+        fprintf(fid, '- Standard isolation (0.2)\n');
+        fprintf(fid, '- Constant FOI = 0.7\n');
+        if S == 8
+            fprintf(fid, '- 5 new cases imported per week\n');
+        elseif S == 9
+            fprintf(fid, '- 10 new cases imported per week\n');
+        elseif S == 10
+            fprintf(fid, '- 15 new cases imported per week\n');
+        end
+    elseif (S >= 3 && S <= 7) || S == 14
+        fprintf(fid, 'Phylogenetic importation scenario with varying isolation levels\n');
+        fprintf(fid, '- Fixed FOI = 2.2\n');
+        if S == 3
+            fprintf(fid, '- Isolation = 0.5\n');
+        elseif S == 4
+            fprintf(fid, '- Isolation = 0.4\n');
+        elseif S == 5
+            fprintf(fid, '- Isolation = 0.3\n');
+        elseif S == 6
+            fprintf(fid, '- Isolation = 0.2\n');
+        elseif S == 7
+            fprintf(fid, '- Isolation = 0.0\n');
+        elseif S == 14
+            fprintf(fid, '- Isolation = 0.8\n');
+        end
+    elseif (S >= 12 && S <= 13) || S == 20 || S == 21 || S == 22
+        fprintf(fid, 'Phylogenetic importation scenario with varying FOI\n');
+        fprintf(fid, '- Standard isolation (0.2)\n');
+        if S == 12
+            fprintf(fid, '- FOI = 1.45\n');
+        elseif S == 13
+            fprintf(fid, '- FOI = 0.7\n');
+        elseif S == 20
+            fprintf(fid, '- FOI = 1.6\n');
+        elseif S == 21
+            fprintf(fid, '- FOI = 1.8\n');
+        elseif S == 22
+            fprintf(fid, '- FOI = 2.0\n');
+        end
+    elseif S == 11
+        fprintf(fid, 'Time-varying FOI scenario\n');
+        fprintf(fid, '- Standard isolation (0.2)\n');
+        fprintf(fid, '- FOI = 0.7 during weeks 4-16 and 26-34\n');
+        fprintf(fid, '- FOI = 2.2 during other weeks\n');
+    elseif S >= 15 && S <= 19
+        fprintf(fid, 'Time-varying FOI scenario\n');
+        fprintf(fid, '- Standard isolation (0.2)\n');
+        if S == 15
+            fprintf(fid, '- FOI = 0.7 during weeks 4-16\n');
+            fprintf(fid, '- FOI = 2.2 during other weeks\n');
+        elseif S == 16
+            fprintf(fid, '- FOI = 0.7 during weeks 26-34\n');
+            fprintf(fid, '- FOI = 2.2 during other weeks\n');
+        elseif S == 17
+            fprintf(fid, '- FOI = 0.7 for 22 randomly selected weeks\n');
+            fprintf(fid, '- FOI = 2.2 during other weeks\n');
+        elseif S == 18
+            fprintf(fid, '- FOI = 0.7 for 13 randomly selected weeks\n');
+            fprintf(fid, '- FOI = 2.2 during other weeks\n');
+        elseif S == 19
+            fprintf(fid, '- FOI = 0.7 for 9 randomly selected weeks\n');
+            fprintf(fid, '- FOI = 2.2 during other weeks\n');
+        end
+    else
+        fprintf(fid, 'Custom scenario\n');
+    end
+    
+    % Close the file
+    fclose(fid);
+end
 
 
