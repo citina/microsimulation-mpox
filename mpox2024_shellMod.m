@@ -680,7 +680,7 @@ tally_tbl.Properties.VariableNames(1:end) = tallyHeaders;
 writetable(tally_tbl, [matrix_name, '.csv'])
 
 % Create memo file with scenario information
-create_scenario_memo(S, testVerDir, iso_transition_path, foi);
+create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_transition_path, foi);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%% Helper Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function state_matrix = update_ve(state_matrix, StateMatCols, WANING_VE_MODE)
@@ -886,7 +886,7 @@ function [IMPORTATION_TYPE, iso_transition_path, foi, const_import_num] = set_sc
     end
 end
 
-function create_scenario_memo(S, testVerDir, iso_transition_path, foi)
+function create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_transition_path, foi)
     % Create a memo file with scenario information
     % Inputs:
     %   S - Scenario number
@@ -903,8 +903,9 @@ function create_scenario_memo(S, testVerDir, iso_transition_path, foi)
     % Write scenario information
     fprintf(fid, 'Scenario Information\n');
     fprintf(fid, '===================\n\n');
-    fprintf(fid, 'Scenario Number: %d\n', S);
-    fprintf(fid, 'Output Directory: %s\n', testVerDir);
+    fprintf(fid, 'Test Version: %s\n', testVersion);
+    fprintf(fid, 'Number of Iterations: %d\n', NUM_ITERATIONS);
+    fprintf(fid, 'Scenario Number: S%d\n', S);
     fprintf(fid, 'Isolation Transition Path: %s\n', iso_transition_path);
     fprintf(fid, 'Force of Infection: %.2f\n\n', foi);
     

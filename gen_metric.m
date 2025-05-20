@@ -7,12 +7,14 @@
 % numWks = 85;
 
 %% set paths
-cd ..
+% Get the base directory (where the shell script is located)
+baseDir = pwd;
+
 % path for the tally csv
-InPath = pwd + "/MonteCarloResults" + "/" + testVersion + "/"; 
+InPath = fullfile(baseDir, 'MonteCarloResults', testVersion); 
 
 % metric matrix output path
-OutPath = pwd + "/MonteCarloResults" + "/" + testVersion + "/"; 
+OutPath = fullfile(baseDir, 'MonteCarloResults', testVersion); 
 
 %% Load tally
 % each cell element holds tally data for a specified iteration
@@ -21,7 +23,7 @@ talllyShelf = [];
 % import the tally.csv
 for i = 1:NUM_ITERATIONS
     % the path to the data must be modified by the iteration number and policy. 
-    dataPath = strcat(InPath,"iter",num2str(i),"/state_matrices/Tally_", testVersion, ".csv");
+    dataPath = fullfile(InPath, sprintf('iter%d/state_matrices/Tally_%s.csv', i, testVersion));
     dataStruct = readtable(dataPath, 'PreserveVariableNames',true);
     talllyShelf(:,:,i) = dataStruct.Variables;
 end

@@ -11,6 +11,9 @@ clear
 close all
 clc
 
+% Store the original working directory
+originalDir = pwd;
+
 % Check system capabilities
 numCores = feature('numcores');
 fprintf('Number of CPU cores: %d\n', numCores);
@@ -20,9 +23,9 @@ config = struct(...
     'workingDir', pwd, ...
     'dataDirHeader', fullfile(pwd, 'MonteCarloResults'), ...
     'inputFile', '../input/Inputs_mpox2024_set2.xlsx', ...
-    'num_iterations', 5, ...
+    'num_iterations', 3, ...
     'waning_ve_mode', 2, ...  % 0: No waning, 1: wanes to 0, 2: wanes to 50%, 3: wanes to 75%, 4: wanes to 25%
-    'scenarios', [8], ...     % [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22]
+    'scenarios', [9], ...     % [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22]
     'enable_sensitivity', 0);
 
 % Create output directory if it doesn't exist
@@ -46,7 +49,7 @@ for scenario = config.scenarios
     % Only use parallel processing if we have multiple iterations
     if config.num_iterations > 1
         if isempty(gcp('nocreate'))
-            maxWorkers = max(1, numCores - 2);
+            maxWorkers = max(1, numCores - 5);
             if maxWorkers > 1
                 parpool('local', maxWorkers);
             end
@@ -54,20 +57,26 @@ for scenario = config.scenarios
         
         % Run iterations in parallel
         parfor iters = 1:config.num_iterations
-            runIteration(iters, testVersionPath, config);
+            runIteration(iters, testVersionPath, config, testVersion);
         end
         
         % Delete the parallel pool after iterations are complete
         delete(gcp('nocreate'));
     else
         % Run single iteration sequentially
-        runIteration(1, testVersionPath, config);
+        runIteration(1, testVersionPath, config, testVersion);
     end
     
     % Generate metrics after all iterations complete
     fprintf('Generating metrics for scenario %d...\n', scenario);
     try
-        cd(config.workingDir);
+        % Ensure we're in the correct directory
+        cd(originalDir);
+        % Set global variables for metrics generation
+        global NUM_ITERATIONS S testVerDir
+        NUM_ITERATIONS = config.num_iterations;
+        S = config.scenario;
+        testVerDir = testVersionPath;  % Set the directory for memo storage
         gen_metric;
     catch ME
         fprintf('Error generating metrics for scenario %d: %s\n', scenario, ME.message);
@@ -79,10 +88,10 @@ for scenario = config.scenarios
     fprintf('Simulation completed in %d hours and %d minutes\n', ...
         floor(tEnd/3600), floor(rem(tEnd,3600)/60));
     
-    cd(config.workingDir);
+    cd(originalDir);
 end
 
-function runIteration(iters, testVersionPath, config)
+function runIteration(iters, testVersionPath, config, testVersion)
     % Create unique directory for this iteration
     sim_dataDir = fullfile(testVersionPath, sprintf('iter%d/state_matrices/', iters));
     mkdir(sim_dataDir);
@@ -94,12 +103,14 @@ function runIteration(iters, testVersionPath, config)
     cd(config.workingDir);
     
     % Set global variables for mpox2024_shellMod
-    global SIM_INPUT_FILE WANING_VE_MODE ENABLE_SENSITIVITY NUM_ITERATIONS S
+    global SIM_INPUT_FILE WANING_VE_MODE ENABLE_SENSITIVITY NUM_ITERATIONS S testVerDir testVersion
     SIM_INPUT_FILE = config.inputFile;
     WANING_VE_MODE = config.waning_ve_mode;
     ENABLE_SENSITIVITY = config.enable_sensitivity;
     NUM_ITERATIONS = config.num_iterations;
     S = config.scenario;
+    testVerDir = testVersionPath;  % Set the directory for memo storage
+    testVersion = testVersion;  % Make testVersion available globally
     
     % Run simulation
     try
