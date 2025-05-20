@@ -5,7 +5,14 @@
 mpox2024_parameters;
 
 % Initialize paths and directories
-state_matrices_path = convertStringsToChars(sim_dataDir);
+if exist('local_sim_dataDir', 'var')
+    state_matrices_path = convertStringsToChars(local_sim_dataDir);
+    S = local_S;
+    WANING_VE_MODE = local_WANING_VE_MODE;
+    ENABLE_SENSITIVITY = local_ENABLE_SENSITIVITY;
+else
+    state_matrices_path = convertStringsToChars(sim_dataDir);
+end
 
 % Load initial population & mixing matrix data
 [state_matrix, StateMatCols] = read_table(init_pop_file);
@@ -161,7 +168,7 @@ for t = 1:T
     % 1. HIV status (immunocompetent vs immunocompromised)
     % 2. Vaccination status (1st vs 2nd dose)
     % 3. Time since vaccination
-    % 4. Waning mode (0: no waning, 1: wane to 0, 2: maintain half VE)
+    % 4. Waning mode (0: no waning, 1: wane to 0, 2: wane to 50%, 3: wane to 75%, 4: wane to 25%)
     % Resource: https://www.nejm.org/doi/full/10.1056/NEJMoa1817307
     state_matrix = update_ve(state_matrix, StateMatCols, WANING_VE_MODE);
     
@@ -682,31 +689,15 @@ function state_matrix = update_ve(state_matrix, StateMatCols, WANING_VE_MODE)
     %   1. HIV status (immunocompetent vs immunocompromised)
     %   2. Vaccination status (1st vs 2nd dose)
     %   3. Time since vaccination
-    %   4. Waning mode (0: no waning, 1: wane to 0, 2: maintain half VE)
+    %   4. Waning mode (0: no waning, 1: wane to 0, 2: wane to 50%, 3: wane to 75%, 4: wane to 25%)
     %
     %   Inputs:
     %   - state_matrix: Current state matrix
     %   - StateMatCols: Structure containing column indices
-    %   - WANING_VE_MODE: Mode for VE waning (0, 1, or 2)
+    %   - WANING_VE_MODE: Mode for VE waning (0, 1, 2, 3, or 4)
     %
     %   Output:
     %   - state_matrix: Updated state matrix with new VE values
-    %
-    % For immunocompetent individuals:
-    % - One dose VE = 0.721, two doses VE = 0.878
-    % - Week 0-2: Linear increase (y = 0.3605x)
-    % - Week 2-4: Plateau at one dose VE (0.721)
-    % - If no 2nd dose: Linear decline to 0 over 52 weeks (y = -0.014x + 0.777)
-    % - If 2nd dose: Linear increase to full VE (y = 0.079x + 0.405)
-    %   Then linear decline based on waning mode
-    %
-    % For immunocompromised (PLWH):
-    % - One dose VE = 0.51, two doses VE = 0.702
-    % - Week 0-2: Linear increase (y = 0.255x)
-    % - Week 2-4: Plateau at one dose VE (0.51)
-    % - If no 2nd dose: Linear decline to 0 over 52 weeks (y = -0.01x + 0.56)
-    % - If 2nd dose: Linear increase to full VE (y = 0.096x + 0.126)
-    %   Then linear decline based on waning mode
 
     % Extract relevant columns
     alive = state_matrix(:, StateMatCols.alive);
@@ -732,75 +723,75 @@ function state_matrix = update_ve(state_matrix, StateMatCols, WANING_VE_MODE)
         state_matrix(normal_vax1_id, StateMatCols.ve) = vac1_normal;        
         state_matrix(normal_vax2_id, StateMatCols.ve) = vac2_normal;
     else
-        % Update VE for immunocompetent individuals
-        % Week 0-2: Linear increase
-        idx1 = hiv_status==0 & vaccinated==1 & vax_wk>=0 & vax_wk<=2 & alive==1;
-        % Week 2-4: Plateau at one dose VE
-        idx2 = hiv_status==0 & vaccinated==1 & vax_wk>2 & vax_wk<=4 & alive==1;
-        % No 2nd dose: Linear decline
-        idx3 = hiv_status==0 & vaccinated==1 & vax_wk>4 & alive==1;
-        % Got 2nd dose: Linear increase to full VE
-        idx4 = hiv_status==0 & vaccinated==2 & vax_wk>=4 & vax_wk<=6 & alive==1;
-
-        state_matrix(idx1, StateMatCols.ve) = 0.3605 * vax_wk(idx1);
-        state_matrix(idx2, StateMatCols.ve) = vac1_normal;
-        state_matrix(idx3, StateMatCols.ve) = max(round(-0.014 * vax_wk(idx3) + 0.777, 3), 0); 
-        state_matrix(idx4, StateMatCols.ve) = max(round(0.079 * vax_wk(idx4) + 0.405, 3), 0);	
-
-        % Update VE for PLWH
-        % Week 0-2: Linear increase
+        % Define target VE ratios based on waning_ve
+        if WANING_VE_MODE == 1
+            target_ratio = 0;      % wanes to 0%
+        elseif WANING_VE_MODE == 2
+            target_ratio = 0.5;    % wanes to 50%
+        elseif WANING_VE_MODE == 3
+            target_ratio = 0.75;   % wanes to 75%
+        elseif WANING_VE_MODE == 4
+            target_ratio = 0.25;   % wanes to 25%
+        end
+        
+        % Calculate target VE values
+        target_ve_normal = vac1_normal * target_ratio;
+        target_ve_plwh = vac1_plwh * target_ratio;
+        target_ve2_normal = vac2_normal * target_ratio;
+        target_ve2_plwh = vac2_plwh * target_ratio;
+        
+        % Define indices for different time periods
+        % Single dose development (weeks 0-4)
+        idx1 = hiv_status==0 & vaccinated==1 & vax_wk>=0 & vax_wk<=2 & alive==1;  % week 0-2
+        idx2 = hiv_status==0 & vaccinated==1 & vax_wk>2 & vax_wk<=4 & alive==1;   % week 2-4
         idx1_plwh = hiv_status~=0 & vaccinated==1 & vax_wk>=0 & vax_wk<=2 & alive==1;
-        % Week 2-4: Plateau at one dose VE
         idx2_plwh = hiv_status~=0 & vaccinated==1 & vax_wk>2 & vax_wk<=4 & alive==1;
-        % No 2nd dose: Linear decline
-        idx3_plwh = hiv_status~=0 & vaccinated==1 & vax_wk>4 & alive==1;
-        % Got 2nd dose: Linear increase to full VE
+        
+        % Single dose waning (weeks 4-56)
+        idx3 = hiv_status==0 & vaccinated==1 & vax_wk>4 & vax_wk<=56 & alive==1;
+        idx3_plwh = hiv_status~=0 & vaccinated==1 & vax_wk>4 & vax_wk<=56 & alive==1;
+        
+        % Two dose development (weeks 4-6)
+        idx4 = hiv_status==0 & vaccinated==2 & vax_wk>=4 & vax_wk<=6 & alive==1;
         idx4_plwh = hiv_status~=0 & vaccinated==2 & vax_wk>=4 & vax_wk<=6 & alive==1;
         
-        state_matrix(idx1_plwh, StateMatCols.ve) = 0.255 * vax_wk(idx1_plwh);        
-        state_matrix(idx2_plwh, StateMatCols.ve) = vac1_plwh;
-        state_matrix(idx3_plwh, StateMatCols.ve) = max(round(-0.01 * vax_wk(idx3_plwh) + 0.56, 3), 0); 
-        state_matrix(idx4_plwh, StateMatCols.ve) = max(round(0.096 * vax_wk(idx4_plwh) + 0.126, 3), 0);	
+        % Two dose waning (weeks 6-58)
+        idx5 = hiv_status==0 & vaccinated==2 & vax_wk>6 & vax_wk<=58 & alive==1;
+        idx6 = hiv_status==0 & vaccinated==2 & vax_wk>58 & alive==1;
+        idx5_plwh = hiv_status~=0 & vaccinated==2 & vax_wk>6 & vax_wk<=58 & alive==1;
+        idx6_plwh = hiv_status~=0 & vaccinated==2 & vax_wk>58 & alive==1;
         
-        % Handle long-term VE waning based on mode
-        if WANING_VE_MODE == 2 % Maintain half VE after 12 months
-            % Immunocompetent individuals
-            idx5 = hiv_status==0 & vaccinated==2 & vax_wk>6 & vax_wk<=58 & alive==1;
-            idx6 = hiv_status==0 & vaccinated==2 & vax_wk>58 & alive==1;
-            idx7 = vaccinated==1 & vax_wk>56 & hiv_status==0 & alive==1;
-            
-            % PLWH
-            idx5_plwh = hiv_status~=0 & vaccinated==2 & vax_wk>6 & vax_wk<=58 & alive==1;
-            idx6_plwh = hiv_status~=0 & vaccinated==2 & vax_wk>58 & alive==1;
-            idx7_plwh = vaccinated==1 & vax_wk>56 & hiv_status~=0 & alive==1;
-            
-            % Apply waning with half VE maintenance
-            state_matrix(idx5, StateMatCols.ve) = max(round(-0.017 * vax_wk(idx5) + 0.986, 3), 0);            
-            state_matrix(idx6, StateMatCols.ve) = vac2_normal/2;         
-            state_matrix(idx7, StateMatCols.ve) = vac1_normal/2;
-            state_matrix(idx5_plwh, StateMatCols.ve) = max(round(-0.014 * vax_wk(idx5_plwh) + 0.786, 3), 0);
-            state_matrix(idx6_plwh, StateMatCols.ve) = vac2_plwh/2;
-            state_matrix(idx7_plwh, StateMatCols.ve) = vac1_plwh/2;
-            
-        elseif WANING_VE_MODE == 1 % VE wanes to 0 after 12 months
-            % Immunocompetent individuals
-            idx5 = vaccinated==2 & vax_wk>6 & hiv_status==0 & alive==1;
-            idx6 = vaccinated==2 & vax_wk>58 & hiv_status==0 & alive==1;
-            idx7 = vaccinated==1 & vax_wk>56 & hiv_status==0 & alive==1;
-            
-            % PLWH
-            idx5_plwh = vaccinated==2 & vax_wk>6 & hiv_status~=0 & alive==1;
-            idx6_plwh = vaccinated==2 & vax_wk>58 & hiv_status~=0 & alive==1;
-            idx7_plwh = vaccinated==1 & vax_wk>56 & hiv_status~=0 & alive==1;
-
-            % Apply waning to 0
-            state_matrix(idx5, StateMatCols.ve) = max(round(-0.017 * vax_wk(idx5) + 0.986, 3), 0);      
-            state_matrix(idx6, StateMatCols.ve) = 0;   
-            state_matrix(idx7, StateMatCols.ve) = 0; 
-            state_matrix(idx5_plwh, StateMatCols.ve) = max(round(-0.014 * vax_wk(idx5_plwh) + 0.786, 3), 0);		         
-            state_matrix(idx6_plwh, StateMatCols.ve) = 0;
-            state_matrix(idx7_plwh, StateMatCols.ve) = 0;
-        end
+        % Calculate VE development rates
+        normal_ve_rate = vac1_normal / 2;  % rate per week to reach vac1_normal in 2 weeks
+        plwh_ve_rate = vac1_plwh / 2;
+        normal_ve2_rate = (vac2_normal - vac1_normal) / 2;  % rate per week to reach vac2_normal in 2 weeks
+        plwh_ve2_rate = (vac2_plwh - vac1_plwh) / 2;
+        
+        % Calculate VE waning rates
+        normal_ve_drop_rate = (vac1_normal - target_ve_normal) / 52;  % rate per week to reach target VE
+        plwh_ve_drop_rate = (vac1_plwh - target_ve_plwh) / 52;
+        normal_ve2_drop_rate = (vac2_normal - target_ve2_normal) / 52;
+        plwh_ve2_drop_rate = (vac2_plwh - target_ve2_plwh) / 52;
+        
+        % Apply VE development for single dose
+        state_matrix(idx1, StateMatCols.ve) = normal_ve_rate * vax_wk(idx1);
+        state_matrix(idx2, StateMatCols.ve) = vac1_normal;
+        state_matrix(idx1_plwh, StateMatCols.ve) = plwh_ve_rate * vax_wk(idx1_plwh);
+        state_matrix(idx2_plwh, StateMatCols.ve) = vac1_plwh;
+        
+        % Apply VE waning for single dose
+        state_matrix(idx3, StateMatCols.ve) = max(round(-normal_ve_drop_rate * (vax_wk(idx3) - 4) + vac1_normal, 3), 0);
+        state_matrix(idx3_plwh, StateMatCols.ve) = max(round(-plwh_ve_drop_rate * (vax_wk(idx3_plwh) - 4) + vac1_plwh, 3), 0);
+        
+        % Apply VE development for two doses
+        state_matrix(idx4, StateMatCols.ve) = max(round(normal_ve2_rate * (vax_wk(idx4) - 4) + vac1_normal, 3), 0);
+        state_matrix(idx4_plwh, StateMatCols.ve) = max(round(plwh_ve2_rate * (vax_wk(idx4_plwh) - 4) + vac1_plwh, 3), 0);
+        
+        % Apply VE waning for two doses
+        state_matrix(idx5, StateMatCols.ve) = max(round(-normal_ve2_drop_rate * (vax_wk(idx5) - 6) + vac2_normal, 3), 0);
+        state_matrix(idx6, StateMatCols.ve) = target_ve2_normal;
+        state_matrix(idx5_plwh, StateMatCols.ve) = max(round(-plwh_ve2_drop_rate * (vax_wk(idx5_plwh) - 6) + vac2_plwh, 3), 0);
+        state_matrix(idx6_plwh, StateMatCols.ve) = target_ve2_plwh;
     end
 end
 

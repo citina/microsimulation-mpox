@@ -2,13 +2,13 @@
 
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=32
+#SBATCH --cpus-per-task=16
 #SBATCH --mem=32GB
-#SBATCH --time=30:00:00
+#SBATCH --time=10:00:00
 #SBATCH --mail-user=citinal@usc.edu
 #SBATCH --mail-type=END,FAIL
 
 module purge
 module load matlab/2024a
 
-matlab -batch Mpox2024_ShellScript_sq
+matlab -batch Mpox2024_ShellScript_sq1

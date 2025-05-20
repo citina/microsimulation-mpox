@@ -2,33 +2,33 @@
 % inputWorkbook = 'Inputs_monkeypox.xlsx';
 
 % Number of weeks to run the simulation
-T = xlsread(sim_inputFile, 'SimDuration');
+T = xlsread(SIM_INPUT_FILE, 'SimDuration');
 
 % inflow proportion (weekly)
-inflow = xlsread(sim_inputFile, 'InflowProportion'); 
+inflow = xlsread(SIM_INPUT_FILE, 'InflowProportion'); 
 
-age_def = xlsread(sim_inputFile, 'AgeDef')';
+age_def = xlsread(SIM_INPUT_FILE, 'AgeDef')';
 
 % race def and prop
-race_def = xlsread(sim_inputFile, 'RaceDef')';
-race_prop = xlsread(sim_inputFile, 'RaceProp')';
+race_def = xlsread(SIM_INPUT_FILE, 'RaceDef')';
+race_prop = xlsread(SIM_INPUT_FILE, 'RaceProp')';
 
 % Infection Calibration Constant
-infectCalib_1 = xlsread(sim_inputFile, 'InfectCalib_1'); %week 1
-infectCalib_2 = xlsread(sim_inputFile, 'InfectCalib_2'); %week 2-x
-infectCalib_3 = xlsread(sim_inputFile, 'InfectCalib_3'); %week x+1 and after
-hivInfect = xlsread(sim_inputFile, 'HIVInfect'); % relative risk for HIV+
+infectCalib_1 = xlsread(SIM_INPUT_FILE, 'InfectCalib_1'); %week 1
+infectCalib_2 = xlsread(SIM_INPUT_FILE, 'InfectCalib_2'); %week 2-x
+infectCalib_3 = xlsread(SIM_INPUT_FILE, 'InfectCalib_3'); %week x+1 and after
+hivInfect = xlsread(SIM_INPUT_FILE, 'HIVInfect'); % relative risk for HIV+
 
 % Multiplier for increased force of infection for young
-youngInfect = xlsread(sim_inputFile, 'YoungInfect');
-midInfect = xlsread(sim_inputFile, 'MidInfect');
-oldInfect = xlsread(sim_inputFile, 'OldInfect');
+youngInfect = xlsread(SIM_INPUT_FILE, 'YoungInfect');
+midInfect = xlsread(SIM_INPUT_FILE, 'MidInfect');
+oldInfect = xlsread(SIM_INPUT_FILE, 'OldInfect');
 
 % Multiplier for increased force of infection based on race
-raceInfect = xlsread(sim_inputFile, 'RaceInfect');
+raceInfect = xlsread(SIM_INPUT_FILE, 'RaceInfect');
 
 % qurantine adherence
-isolation_adherence = xlsread(sim_inputFile, 'isolationAdh');
+isolation_adherence = xlsread(SIM_INPUT_FILE, 'isolationAdh');
 
 % vaccination efficiency
 vac1_plwh = 0.51;
@@ -36,7 +36,7 @@ vac2_plwh = 0.702;
 vac1_normal = 0.721;
 vac2_normal = 0.878;
 
-[~, filePaths] = xlsread(sim_inputFile, 'FilePaths', 'B1:B19');
+[~, filePaths] = xlsread(SIM_INPUT_FILE, 'FilePaths', 'B1:B19');
 
 % Initial population state matrix input file
 init_pop_file = filePaths{1};

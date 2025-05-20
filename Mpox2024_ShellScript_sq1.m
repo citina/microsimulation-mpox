@@ -17,15 +17,17 @@ fprintf('Number of CPU cores: %d\n', numCores);
 
 %% Simulation Configuration Parameters
 % Core simulation settings
-NUM_ITERATIONS = 3;           % Number of Monte Carlo iterations
+NUM_ITERATIONS = 5;           % Number of Monte Carlo iterations
 
 % Vaccine efficacy settings
 WANING_VE_MODE = 2;         % 0: No waning
                             % 1: VE wanes to 0 after 12 months
-                            % 2: VE wanes to half after 12 months
+                            % 2: VE wanes to 50% after 12 months
+                            % 3: VE wanes to 75% after 12 months
+                            % 4: VE wanes to 25% after 12 months
 
 % Scenarios
-SCENARIOS = [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22];
+SCENARIOS = [8 9 10];%[0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22];
 
 ENABLE_SENSITIVITY = 0;      % Flag to enable sensitivity analysis
 
@@ -51,33 +53,46 @@ end
 for S = SCENARIOS
 
     % Create version-specific directory
-    testVersion = sprintf('mpox2024_S%d', S);
+    testVersion = sprintf('test_mpox2024_S%d', S);
     testVerDir = fullfile(OUTPUT_DIR_HEADER, testVersion);
     mkdir(testVerDir);
     
     % Set up parallel processing if multiple iterations
     if NUM_ITERATIONS > 1
-        % Calculate maximum number of workers (leave some cores free)
-        maxWorkers = max(1, numCores - 4);
-        
         % Create a parallel pool if it doesn't exist
         if isempty(gcp('nocreate'))
+            % Calculate maximum number of workers (leave some cores free)
+            maxWorkers = max(1, numCores - 2);
             parpool('local', min(maxWorkers, NUM_ITERATIONS));
+        end
+        
+        % Create a temporary directory for each iteration
+        tempDirs = cell(NUM_ITERATIONS, 1);
+        for i = 1:NUM_ITERATIONS
+            tempDirs{i} = fullfile(testVerDir, sprintf('iter%d/state_matrices/', i));
+            mkdir(tempDirs{i});
         end
         
         % Run Monte Carlo iterations in parallel
         parfor iter = 1:NUM_ITERATIONS
             fprintf('Running iteration %d/%d\n', iter, NUM_ITERATIONS);
             
-            % Create iteration-specific directory
-            sim_dataDir = fullfile(testVerDir, sprintf('iter%d/state_matrices/', iter));
-            mkdir(sim_dataDir);
-            
             % Set random seed for reproducibility
             rng('shuffle');
             
-            % Run simulation
-            mpox2024_shellMod;
+            % Create local copies of required variables
+            local_sim_dataDir = tempDirs{iter};
+            local_S = S;
+            local_WANING_VE_MODE = WANING_VE_MODE;
+            local_ENABLE_SENSITIVITY = ENABLE_SENSITIVITY;
+            
+            % Run simulation with local variables
+            try
+                mpox2024_shellMod;
+            catch ME
+                fprintf('Error in iteration %d: %s\n', iter, ME.message);
+                continue;
+            end
         end
         
         % Clean up parallel pool

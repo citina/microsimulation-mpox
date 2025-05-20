@@ -19,7 +19,7 @@ OutPath = pwd + "/MonteCarloResults" + "/" + testVersion + "/";
 talllyShelf = [];  
 
 % import the tally.csv
-for i = 1:length(iterations)
+for i = 1:NUM_ITERATIONS
     % the path to the data must be modified by the iteration number and policy. 
     dataPath = strcat(InPath,"iter",num2str(i),"/state_matrices/Tally_", testVersion, ".csv");
     dataStruct = readtable(dataPath, 'PreserveVariableNames',true);
