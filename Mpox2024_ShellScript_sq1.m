@@ -23,9 +23,9 @@ config = struct(...
     'workingDir', pwd, ...
     'dataDirHeader', fullfile(pwd, 'MonteCarloResults'), ...
     'inputFile', '../input/Inputs_mpox2024_set2.xlsx', ...
-    'num_iterations', 3, ...
+    'num_iterations', 15, ...
     'waning_ve_mode', 2, ...  % 0: No waning, 1: wanes to 0, 2: wanes to 50%, 3: wanes to 75%, 4: wanes to 25%
-    'scenarios', [9], ...     % [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22]
+    'scenarios', [8 9 10 15 16 17 18 19], ...     % [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22]
     'enable_sensitivity', 0);
 
 % Create output directory if it doesn't exist
@@ -49,7 +49,7 @@ for scenario = config.scenarios
     % Only use parallel processing if we have multiple iterations
     if config.num_iterations > 1
         if isempty(gcp('nocreate'))
-            maxWorkers = max(1, numCores - 5);
+            maxWorkers = max(1, numCores - 1);
             if maxWorkers > 1
                 parpool('local', maxWorkers);
             end
