@@ -1,0 +1,67 @@
+# Monte Carlo simulation results
+MonteCarloResults/
+MonteCarloResults/*
+
+# MATLAB specific files
+*.asv
+*.m~
+*.mat
+*.mex*
+*.slxc
+*.slx~
+*.slx.autosave
+*.slx.bak
+*.slx.r*
+*.slx.tmp
+*.slx.tmp.*
+*.slx.tmp.*.bak
+*.slx.tmp.*.r*
+*.slx.tmp.*.t*
+*.slx.tmp.*.w*
+*.slx.tmp.*.x*
+*.slx.tmp.*.y*
+*.slx.tmp.*.z*
+*.slx.tmp.*.0*
+*.slx.tmp.*.1*
+*.slx.tmp.*.2*
+*.slx.tmp.*.3*
+*.slx.tmp.*.4*
+*.slx.tmp.*.5*
+*.slx.tmp.*.6*
+*.slx.tmp.*.7*
+*.slx.tmp.*.8*
+*.slx.tmp.*.9*
+
+# MATLAB generated files
+*.mex
+*.mexa64
+*.mexglx
+*.mexmaca64
+*.mexmaci64
+*.mexw32
+*.mexw64
+
+# MATLAB state files
+*.mat
+*.mex
+*.mexa64
+*.mexglx
+*.mexmaca64
+*.mexmaci64
+*.mexw32
+*.mexw64
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db 

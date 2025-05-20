@@ -15,112 +15,106 @@ clc
 numCores = feature('numcores');
 fprintf('Number of CPU cores: %d\n', numCores);
 
-%% Simulation Configuration Parameters
-% Core simulation settings
-NUM_ITERATIONS = 5;           % Number of Monte Carlo iterations
+% Default configuration structure
+config = struct(...
+    'workingDir', pwd, ...
+    'dataDirHeader', fullfile(pwd, 'MonteCarloResults'), ...
+    'inputFile', '../input/Inputs_mpox2024_set2.xlsx', ...
+    'num_iterations', 5, ...
+    'waning_ve_mode', 2, ...  % 0: No waning, 1: wanes to 0, 2: wanes to 50%, 3: wanes to 75%, 4: wanes to 25%
+    'scenarios', [8], ...     % [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22]
+    'enable_sensitivity', 0);
 
-% Vaccine efficacy settings
-WANING_VE_MODE = 2;         % 0: No waning
-                            % 1: VE wanes to 0 after 12 months
-                            % 2: VE wanes to 50% after 12 months
-                            % 3: VE wanes to 75% after 12 months
-                            % 4: VE wanes to 25% after 12 months
-
-% Scenarios
-SCENARIOS = [8 9 10];%[0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22];
-
-ENABLE_SENSITIVITY = 0;      % Flag to enable sensitivity analysis
-
-%% File and Directory Configuration
-% Input file configuration
-SIM_INPUT_FILE = "../input/Inputs_mpox2024_set2.xlsx";
-
-% Output directory configuration
-WORKING_DIR = pwd;
-OUTPUT_DIR_HEADER = fileparts(WORKING_DIR) + "/MonteCarloResults";
-mkdir(OUTPUT_DIR_HEADER);
-
-%% Main Simulation Loop
-fprintf('*** Starting Simulation Process ***\n');
-tStart = tic;
-
-% Validate input file exists
-if ~exist(SIM_INPUT_FILE, 'file')
-    error('Input file not found: %s', SIM_INPUT_FILE);
+% Create output directory if it doesn't exist
+if ~exist(config.dataDirHeader, 'dir')
+    mkdir(config.dataDirHeader);
 end
 
-% Iterate through FOI values
-for S = SCENARIOS
-
+% Main simulation loop
+for scenario = config.scenarios
     % Create version-specific directory
-    testVersion = sprintf('test_mpox2024_S%d', S);
-    testVerDir = fullfile(OUTPUT_DIR_HEADER, testVersion);
-    mkdir(testVerDir);
+    testVersion = sprintf('test_mpox2024_S%d', scenario);
+    testVersionPath = fullfile(config.dataDirHeader, testVersion);
+    mkdir(testVersionPath);
     
-    % Set up parallel processing if multiple iterations
-    if NUM_ITERATIONS > 1
-        % Create a parallel pool if it doesn't exist
+    % Update config
+    config.scenario = scenario;
+    
+    fprintf('*** Running Simulation: %s ***\n', testVersion);
+    tStart = tic;
+    
+    % Only use parallel processing if we have multiple iterations
+    if config.num_iterations > 1
         if isempty(gcp('nocreate'))
-            % Calculate maximum number of workers (leave some cores free)
             maxWorkers = max(1, numCores - 2);
-            parpool('local', min(maxWorkers, NUM_ITERATIONS));
-        end
-        
-        % Create a temporary directory for each iteration
-        tempDirs = cell(NUM_ITERATIONS, 1);
-        for i = 1:NUM_ITERATIONS
-            tempDirs{i} = fullfile(testVerDir, sprintf('iter%d/state_matrices/', i));
-            mkdir(tempDirs{i});
-        end
-        
-        % Run Monte Carlo iterations in parallel
-        parfor iter = 1:NUM_ITERATIONS
-            fprintf('Running iteration %d/%d\n', iter, NUM_ITERATIONS);
-            
-            % Set random seed for reproducibility
-            rng('shuffle');
-            
-            % Create local copies of required variables
-            local_sim_dataDir = tempDirs{iter};
-            local_S = S;
-            local_WANING_VE_MODE = WANING_VE_MODE;
-            local_ENABLE_SENSITIVITY = ENABLE_SENSITIVITY;
-            
-            % Run simulation with local variables
-            try
-                mpox2024_shellMod;
-            catch ME
-                fprintf('Error in iteration %d: %s\n', iter, ME.message);
-                continue;
+            if maxWorkers > 1
+                parpool('local', maxWorkers);
             end
         end
         
-        % Clean up parallel pool
+        % Run iterations in parallel
+        parfor iters = 1:config.num_iterations
+            runIteration(iters, testVersionPath, config);
+        end
+        
+        % Delete the parallel pool after iterations are complete
         delete(gcp('nocreate'));
     else
-        % Single iteration case
-        iter = 1;
-        fprintf('Running single iteration\n');
-        
-        % Create iteration-specific directory
-        sim_dataDir = fullfile(testVerDir, sprintf('iter%d/state_matrices/', iter));
-        mkdir(sim_dataDir);
-        
-        % Set random seed for reproducibility
-        rng('shuffle');
-        
-        % Run simulation
-        mpox2024_shellMod;
+        % Run single iteration sequentially
+        runIteration(1, testVersionPath, config);
     end
     
-    % Generate metrics after all iterations
-    gen_metric;
+    % Generate metrics after all iterations complete
+    fprintf('Generating metrics for scenario %d...\n', scenario);
+    try
+        cd(config.workingDir);
+        gen_metric;
+    catch ME
+        fprintf('Error generating metrics for scenario %d: %s\n', scenario, ME.message);
+        continue;
+    end
+    
+    % Report execution time
+    tEnd = toc(tStart);
+    fprintf('Simulation completed in %d hours and %d minutes\n', ...
+        floor(tEnd/3600), floor(rem(tEnd,3600)/60));
+    
+    cd(config.workingDir);
 end
 
-% Report execution time
-tEnd = toc(tStart);
-fprintf('Simulation completed in %d hours and %d minutes\n', ...
-    floor(tEnd/3600), floor(rem(tEnd,3600)/60));
-
-% Return to original working directory
-cd(WORKING_DIR);
+function runIteration(iters, testVersionPath, config)
+    % Create unique directory for this iteration
+    sim_dataDir = fullfile(testVersionPath, sprintf('iter%d/state_matrices/', iters));
+    mkdir(sim_dataDir);
+    
+    % Set random seed for reproducibility
+    rng('shuffle');
+    
+    % Set the current directory to the working directory
+    cd(config.workingDir);
+    
+    % Set global variables for mpox2024_shellMod
+    global SIM_INPUT_FILE WANING_VE_MODE ENABLE_SENSITIVITY NUM_ITERATIONS S
+    SIM_INPUT_FILE = config.inputFile;
+    WANING_VE_MODE = config.waning_ve_mode;
+    ENABLE_SENSITIVITY = config.enable_sensitivity;
+    NUM_ITERATIONS = config.num_iterations;
+    S = config.scenario;
+    
+    % Run simulation
+    try
+        mpox2024_shellMod;
+        
+        % Create tally file path
+        tallyPath = fullfile(sim_dataDir, sprintf('Tally_%s.csv', testVersion));
+        
+        % Save tally data
+        if exist('tally', 'var')
+            tally_tbl = array2table(tally);
+            tally_tbl.Properties.VariableNames(1:end) = tallyHeaders;
+            writetable(tally_tbl, tallyPath);
+        end
+    catch ME
+        fprintf('Error in iteration %d for scenario %d: %s\n', iters, config.scenario, ME.message);
+    end
+end
