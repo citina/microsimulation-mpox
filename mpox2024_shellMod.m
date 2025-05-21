@@ -137,29 +137,41 @@ for t = 1:T
                 foi = 0.7;
             elseif t>=26 && t<=34
                 foi = 0.7; 
+            else
+                foi = 2.2;
             end
         case 15 % S15: For week 4 – 16 (Apr-Jun), FOI = 0.7
             if t>=4 && t<=16
                 foi = 0.7;
+            else
+                foi = 2.2;
             end
         case 16 % S16: For week 26 – 34 (Sept-Oct), FOI = 0.7
             if t>=26 && t<=34
                 foi = 0.7; 
+            else
+                foi = 2.2;
             end
         case 17 % S17: Randomly select 22 weeks with FoI = 0.7
             selected_wks = randsample(1:T, 22);
             if ismember(t, selected_wks)
                 foi = 0.7;
+            else
+                foi = 2.2;
             end
         case 18 % S18: Randomly select 13 weeks with FoI = 0.7
             selected_wks = randsample(1:T, 13);
             if ismember(t, selected_wks)
                 foi = 0.7;
+            else
+                foi = 2.2;
             end
         case 19 % S19: Randomly select 9 weeks with FoI = 0.7
             selected_wks = randsample(1:T, 9);
             if ismember(t, selected_wks)
                 foi = 0.7;
+            else
+                foi = 2.2;
             end
     end
     
