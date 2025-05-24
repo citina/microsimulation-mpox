@@ -1,0 +1,14 @@
+Scenario Information
+===================
+
+Test Version: new_mpox2024_S15
+Number of Iterations: 20
+Scenario Number: S15
+Isolation Transition Path: ../input/isolationOn_0.2.csv
+Force of Infection: 2.20
+
+Scenario Description:
+Time-varying FOI scenario
+- Standard isolation (0.2)
+- FOI = 0.7 during weeks 4-16
+- FOI = 2.2 during other weeks

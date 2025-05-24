@@ -1,9 +1,13 @@
 # Monte Carlo simulation results
 MonteCarloResults/*
-!MonteCarloResults/{new,ve*}_mpox2024_S*/
-MonteCarloResults/{new,ve*}_mpox2024_S*/*
-!MonteCarloResults/{new,ve*}_mpox2024_S*/*.csv
-!MonteCarloResults/{new,ve*}_mpox2024_S*/*.txt
+!MonteCarloResults/new_mpox2024_S*/
+!MonteCarloResults/ve*_mpox2024_S*/
+MonteCarloResults/new_mpox2024_S*/*
+MonteCarloResults/ve*_mpox2024_S*/*
+!MonteCarloResults/new_mpox2024_S*/*.csv
+!MonteCarloResults/new_mpox2024_S*/*.txt
+!MonteCarloResults/ve*_mpox2024_S*/*.csv
+!MonteCarloResults/ve*_mpox2024_S*/*.txt
 
 # MATLAB specific files
 *.asv
