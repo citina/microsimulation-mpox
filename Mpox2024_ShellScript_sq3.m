@@ -24,8 +24,8 @@ config = struct(...
     'dataDirHeader', fullfile(pwd, 'MonteCarloResults'), ...
     'inputFile', '../input/Inputs_mpox2024_set2.xlsx', ...
     'num_iterations', 20, ...
-    'waning_ve_mode', 2, ...  % 0: No waning, 1: wanes to 0, 2: wanes to 50%, 3: wanes to 75%, 4: wanes to 25%
-    'scenarios', [17 18 19], ...     % [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22]
+    'waning_ve_mode', 3, ...  % 0: No waning, 1: wanes to 0, 2: wanes to 50%, 3: wanes to 75%, 4: wanes to 25%
+    'scenarios', [9 10 11 12 13 14 15 16 17 18 19 20 21 22], ...     % [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22]
     'enable_sensitivity', 0);
 
 % Create output directory if it doesn't exist
@@ -36,7 +36,7 @@ end
 % Main simulation loop
 for scenario = config.scenarios
     % Create version-specific directory
-    testVersion = sprintf('new_mpox2024_S%d', scenario);
+    testVersion = sprintf('ve0.75_mpox2024_S%d', scenario);
     testVersionPath = fullfile(config.dataDirHeader, testVersion);
     mkdir(testVersionPath);
     

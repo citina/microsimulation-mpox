@@ -14,14 +14,28 @@ new_version_path = Path("/Users/liangshiting/Desktop/USCResearch/Mpox_2024/Code_
 
 # Scenarios to compare
 scenarios = [
+    "mpox2024_S1",
+    "mpox2024_S2",
+    "mpox2024_S3",
+    "mpox2024_S4",
+    "mpox2024_S5",
+    "mpox2024_S6",
+    "mpox2024_S7",
     "mpox2024_S8",
     "mpox2024_S9",
     "mpox2024_S10",
+    "mpox2024_S11",
+    "mpox2024_S12",
+    "mpox2024_S13",
+    "mpox2024_S14",
     "mpox2024_S15",
     "mpox2024_S16",
     "mpox2024_S17",
     "mpox2024_S18",
-    "mpox2024_S19"
+    "mpox2024_S19",
+    "mpox2024_S20",
+    "mpox2024_S21",
+    "mpox2024_S22"
 ]
 
 # Metrics to compare
@@ -74,7 +88,7 @@ def main():
         print(f"\nProcessing scenario: {scenario}")
         
         # Adjust scenario name for new version
-        new_scenario = f"test_{scenario}"
+        new_scenario = f"new_{scenario}"
         
         for metric in metrics:
             print(f"  Comparing metric: {metric}")

@@ -152,22 +152,19 @@ for t = 1:T
             else
                 foi = 2.2;
             end
-        case 17 % S17: Randomly select 22 weeks with FoI = 0.7
-            selected_wks = randsample(1:T, 22);
+        case 17 % S17: 22 weeks with FoI = 0.7
             if ismember(t, selected_wks)
                 foi = 0.7;
             else
                 foi = 2.2;
             end
-        case 18 % S18: Randomly select 13 weeks with FoI = 0.7
-            selected_wks = randsample(1:T, 13);
+        case 18 % S18: 13 weeks with FoI = 0.7
             if ismember(t, selected_wks)
                 foi = 0.7;
             else
                 foi = 2.2;
             end
-        case 19 % S19: Randomly select 9 weeks with FoI = 0.7
-            selected_wks = randsample(1:T, 9);
+        case 19 % S19: 9 weeks with FoI = 0.7
             if ismember(t, selected_wks)
                 foi = 0.7;
             else

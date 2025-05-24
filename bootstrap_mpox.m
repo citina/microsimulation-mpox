@@ -15,19 +15,33 @@ of bootstraps, and y is the number of iterations we have in total
 
 %% bootstrap settings
 bs = 500; % should be at least 20 for the code to work
-iterations = 1:8;
+iterations = 1:20;
 numWks = 85;
 
 % List of scenarios to process
 scenario_names = {
-    "test_mpox2024_S8",
-    "test_mpox2024_S9",
-    "test_mpox2024_S10",
-    "test_mpox2024_S15",
-    "test_mpox2024_S16",
-    "test_mpox2024_S17",
-    "test_mpox2024_S18",
-    "test_mpox2024_S19"
+    % "new_mpox2024_S1",
+    % "new_mpox2024_S2",
+    % "new_mpox2024_S3",
+    % "new_mpox2024_S4",
+    % "new_mpox2024_S5",
+    % "new_mpox2024_S6",
+    % "new_mpox2024_S7",
+    % "new_mpox2024_S8",
+    % "new_mpox2024_S9",
+    % "new_mpox2024_S10",
+    % "new_mpox2024_S11",
+    "new_mpox2024_S12",
+    "new_mpox2024_S13",
+    "new_mpox2024_S14",
+    "new_mpox2024_S15",
+    "new_mpox2024_S16",
+    % "new_mpox2024_S17",
+    % "new_mpox2024_S18",
+    % "new_mpox2024_S19",
+    "new_mpox2024_S20",
+    "new_mpox2024_S21",
+    "new_mpox2024_S22"
     % Add or remove scenarios as needed
 };
 
