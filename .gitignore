@@ -1,6 +1,9 @@
 # Monte Carlo simulation results
-MonteCarloResults/
 MonteCarloResults/*
+!MonteCarloResults/{new,ve*}_mpox2024_S*/
+MonteCarloResults/{new,ve*}_mpox2024_S*/*
+!MonteCarloResults/{new,ve*}_mpox2024_S*/*.csv
+!MonteCarloResults/{new,ve*}_mpox2024_S*/*.txt
 
 # MATLAB specific files
 *.asv
@@ -56,6 +59,18 @@ MonteCarloResults/*
 *.bak
 *.swp
 *~
+
+# job files
+*.job
+*.job.o*
+*.job.e*
+*.job.o*.*
+*.job.e*.*
+
+# comparison folder
+Comparison_plots/*
+plot_ve_waning.py
+ve_waning_comparison.png
 
 # OS generated files
 .DS_Store
