@@ -20,24 +20,33 @@ numWks = 85;
 
 % List of scenarios to process
 scenario_names = {
-    "ve0.25_mpox2024_S1",
-    "ve0.25_mpox2024_S2",
-    "ve0.25_mpox2024_S3",
-    "ve0.25_mpox2024_S4",
-    "ve0.25_mpox2024_S5",
-    "ve0.25_mpox2024_S6",
-    "ve0.25_mpox2024_S7",
-    "ve0.25_mpox2024_S8",
-    "ve0.25_mpox2024_S9",
-    "ve0.75_mpox2024_S1",
-    "ve0.75_mpox2024_S2",
-    "ve0.75_mpox2024_S3",
-    "ve0.75_mpox2024_S4",
-    "ve0.75_mpox2024_S5",
-    "ve0.75_mpox2024_S6",
-    "ve0.75_mpox2024_S7",
-    "ve0.75_mpox2024_S8",
-    "ve0.75_mpox2024_S9"
+    "ve0.25_mpox2024_S10",
+    "ve0.25_mpox2024_S11",
+    "ve0.25_mpox2024_S12",
+    "ve0.25_mpox2024_S13",
+    "ve0.25_mpox2024_S14",
+    "ve0.25_mpox2024_S15",
+    "ve0.25_mpox2024_S16",
+    "ve0.25_mpox2024_S17",
+    "ve0.25_mpox2024_S18",
+    "ve0.25_mpox2024_S19",
+    "ve0.25_mpox2024_S20",
+    "ve0.25_mpox2024_S21",
+    "ve0.25_mpox2024_S22",
+    "ve0.75_mpox2024_S10",
+    "ve0.75_mpox2024_S11",
+    "ve0.75_mpox2024_S12",
+    "ve0.75_mpox2024_S13",
+    "ve0.75_mpox2024_S14",
+    "ve0.75_mpox2024_S15",
+    "ve0.75_mpox2024_S16",
+    "ve0.75_mpox2024_S17",
+    "ve0.75_mpox2024_S18",
+    "ve0.75_mpox2024_S19",
+    "ve0.75_mpox2024_S20",
+    "ve0.75_mpox2024_S21",
+    "ve0.75_mpox2024_S22"
+    
 };
 %% paths
 % Base path for MonteCarloResults
@@ -104,7 +113,7 @@ for scenarioIdx = 1:length(scenario_names)
             warning('File not found: %s. Skipping scenario.', tally_path);
             continue;
         end
-        tally_table = readtable(tally_path, 'VariableNamingRule', 'preserve');
+        tally_table = readtable(tally_path);
         for metric_idx = 1:length(metrics_names) 
             metricName = metrics_names{metric_idx};
             metricVector = tally_table.(metricName);

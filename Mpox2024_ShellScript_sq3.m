@@ -48,23 +48,30 @@ for scenario = config.scenarios
     
     % Only use parallel processing if we have multiple iterations
     if config.num_iterations > 1
-        if isempty(gcp('nocreate'))
-            maxWorkers = max(1, numCores - 2);
-            if maxWorkers > 1
-                % Check if running on HPC (SLURM)
-                if ~isempty(getenv('SLURM_JOB_ID'))
-                    % HPC configuration
-                    pc = parallel.cluster.Local;
-                    job_folder = fullfile('/scratch1/',getenv('USER'),getenv('SLURM_JOB_ID'));
+        % Clean up any existing parallel pool first
+        if ~isempty(gcp('nocreate'))
+            delete(gcp('nocreate'));
+        end
+        
+        maxWorkers = max(1, numCores - 2);
+        if maxWorkers > 1
+            % Check if running on HPC (SLURM)
+            if ~isempty(getenv('SLURM_JOB_ID'))
+                % HPC configuration
+                pc = parallel.cluster.Local;
+                job_folder = fullfile('/scratch1/',getenv('USER'),getenv('SLURM_JOB_ID'));
+                if ~exist(job_folder, 'dir')
                     mkdir(job_folder);
-                    set(pc,'JobStorageLocation',job_folder);
-                    fprintf('Running on HPC. Using parallel job storage location: %s\n', job_folder);
-                else
-                    % Local configuration
-                    fprintf('Running locally. Using default parallel pool configuration.\n');
-                    pc = parallel.cluster.Local;
                 end
-                parpool(pc, maxWorkers);
+                set(pc,'JobStorageLocation',job_folder);
+                fprintf('Running on HPC. Using parallel job storage location: %s\n', job_folder);
+                
+                % Initialize parallel pool with explicit configuration
+                parpool(pc, maxWorkers, 'AttachedFiles', {}, 'AutoAddClientPath', false);
+            else
+                % Local configuration
+                fprintf('Running locally. Using default parallel pool configuration.\n');
+                parpool('local', maxWorkers);
             end
         end
         
