@@ -20,31 +20,25 @@ numWks = 85;
 
 % List of scenarios to process
 scenario_names = {
-    % "new_mpox2024_S1",
-    % "new_mpox2024_S2",
-    % "new_mpox2024_S3",
-    % "new_mpox2024_S4",
-    % "new_mpox2024_S5",
-    % "new_mpox2024_S6",
-    % "new_mpox2024_S7",
-    % "new_mpox2024_S8",
-    % "new_mpox2024_S9",
-    % "new_mpox2024_S10",
-    % "new_mpox2024_S11",
-    "new_mpox2024_S12",
-    "new_mpox2024_S13",
-    "new_mpox2024_S14",
-    "new_mpox2024_S15",
-    "new_mpox2024_S16",
-    % "new_mpox2024_S17",
-    % "new_mpox2024_S18",
-    % "new_mpox2024_S19",
-    "new_mpox2024_S20",
-    "new_mpox2024_S21",
-    "new_mpox2024_S22"
-    % Add or remove scenarios as needed
+    "ve0.25_mpox2024_S1",
+    "ve0.25_mpox2024_S2",
+    "ve0.25_mpox2024_S3",
+    "ve0.25_mpox2024_S4",
+    "ve0.25_mpox2024_S5",
+    "ve0.25_mpox2024_S6",
+    "ve0.25_mpox2024_S7",
+    "ve0.25_mpox2024_S8",
+    "ve0.25_mpox2024_S9",
+    "ve0.75_mpox2024_S1",
+    "ve0.75_mpox2024_S2",
+    "ve0.75_mpox2024_S3",
+    "ve0.75_mpox2024_S4",
+    "ve0.75_mpox2024_S5",
+    "ve0.75_mpox2024_S6",
+    "ve0.75_mpox2024_S7",
+    "ve0.75_mpox2024_S8",
+    "ve0.75_mpox2024_S9"
 };
-
 %% paths
 % Base path for MonteCarloResults
 basePath = pwd;
@@ -110,7 +104,7 @@ for scenarioIdx = 1:length(scenario_names)
             warning('File not found: %s. Skipping scenario.', tally_path);
             continue;
         end
-        tally_table = readtable(tally_path);
+        tally_table = readtable(tally_path, 'VariableNamingRule', 'preserve');
         for metric_idx = 1:length(metrics_names) 
             metricName = metrics_names{metric_idx};
             metricVector = tally_table.(metricName);
