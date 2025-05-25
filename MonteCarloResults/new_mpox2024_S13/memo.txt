@@ -1,0 +1,13 @@
+Scenario Information
+===================
+
+Test Version: new_mpox2024_S13
+Number of Iterations: 20
+Scenario Number: S13
+Isolation Transition Path: ../input/isolationOn_0.2.csv
+Force of Infection: 0.70
+
+Scenario Description:
+Phylogenetic importation scenario with varying FOI
+- Standard isolation (0.2)
+- FOI = 0.7
