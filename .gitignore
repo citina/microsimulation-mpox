@@ -4,6 +4,7 @@ MonteCarloResults/*
 !MonteCarloResults/ve*_mpox2024_S*/
 !MonteCarloResults/new_mpox2024_S*/*_bs_results.csv
 !MonteCarloResults/ve*_mpox2024_S*/*_bs_results.csv
+MonteCarloResults/*/iter*/state_matrices/*.csv
 
 # MATLAB specific files
 *.asv
