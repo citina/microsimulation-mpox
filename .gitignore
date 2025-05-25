@@ -10,6 +10,8 @@ MonteCarloResults/ve*_mpox2024_S*/*
 !MonteCarloResults/ve*_mpox2024_S*/*.txt
 !MonteCarloResults/ve*_mpox2024_S*/*_bs_results.csv
 !MonteCarloResults/new_mpox2024_S*/*_bs_results.csv
+!MonteCarloResults/ve0.75_mpox2024_S3/newInfect_hiv_bs_results.csv
+!MonteCarloResults/ve0.75_mpox2024_S3/*.csv
 
 # MATLAB specific files
 *.asv
