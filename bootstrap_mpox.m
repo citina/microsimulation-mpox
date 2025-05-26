@@ -20,16 +20,13 @@ numWks = 85;
 
 % List of scenarios to process
 scenario_names = {
-    % "2Xnew_mpox2024_S1",
-    % "2Xnew_mpox2024_S2",
-    % "2Xnew_mpox2024_S3",
-    % "2Xnew_mpox2024_S4",
-    % "2Xnew_mpox2024_S5",
-    % "2Xnew_mpox2024_S6",
-    % "2Xnew_mpox2024_S7",
-    % "2Xnew_mpox2024_S8",
-    % "2Xnew_mpox2024_S9",
-    "2Xnew_mpox2024_S10",
+    "2Xnew_mpox2024_S1",
+    "2Xnew_mpox2024_S2",
+    "2Xnew_mpox2024_S3",
+    "2Xnew_mpox2024_S4",
+    "2Xnew_mpox2024_S5",
+    "2Xnew_mpox2024_S6",
+    "2Xnew_mpox2024_S7",
     "2Xnew_mpox2024_S11",
     "2Xnew_mpox2024_S12",
     "2Xnew_mpox2024_S13",
