@@ -20,7 +20,28 @@ numWks = 85;
 
 % List of scenarios to process
 scenario_names = {
-    "new_mpox2024_S11"
+    % "2Xnew_mpox2024_S1",
+    % "2Xnew_mpox2024_S2",
+    % "2Xnew_mpox2024_S3",
+    % "2Xnew_mpox2024_S4",
+    % "2Xnew_mpox2024_S5",
+    % "2Xnew_mpox2024_S6",
+    % "2Xnew_mpox2024_S7",
+    % "2Xnew_mpox2024_S8",
+    % "2Xnew_mpox2024_S9",
+    "2Xnew_mpox2024_S10",
+    "2Xnew_mpox2024_S11",
+    "2Xnew_mpox2024_S12",
+    "2Xnew_mpox2024_S13",
+    "2Xnew_mpox2024_S14",
+    "2Xnew_mpox2024_S15",
+    "2Xnew_mpox2024_S16",
+    "2Xnew_mpox2024_S17",
+    "2Xnew_mpox2024_S18",
+    "2Xnew_mpox2024_S19",
+    "2Xnew_mpox2024_S20",
+    "2Xnew_mpox2024_S21",
+    "2Xnew_mpox2024_S22"
 };
 %% paths
 % Base path for MonteCarloResults

@@ -1,12 +1,16 @@
 MonteCarloResults/*
 !MonteCarloResults/new_mpox2024_S*/
 !MonteCarloResults/ve*_mpox2024_S*/
+!MonteCarloResults/2Xnew_mpox2024_S*/
 MonteCarloResults/new_mpox2024_S*/*
 MonteCarloResults/ve*_mpox2024_S*/*
+MonteCarloResults/2Xnew_mpox2024_S*/*
 !MonteCarloResults/new_mpox2024_S*/*.csv
 !MonteCarloResults/new_mpox2024_S*/*.txt
 !MonteCarloResults/ve*_mpox2024_S*/*.csv
 !MonteCarloResults/ve*_mpox2024_S*/*.txt
+!MonteCarloResults/2Xnew_mpox2024_S*/*.csv
+!MonteCarloResults/2Xnew_mpox2024_S*/*.txt
 
 # MATLAB specific files
 *.asv
