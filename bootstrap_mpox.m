@@ -20,9 +20,7 @@ numWks = 85;
 
 % List of scenarios to process
 scenario_names = {
-    "new_mpox2024_S17",
-    "new_mpox2024_S18",
-    "new_mpox2024_S19"
+    "new_mpox2024_S11"
 };
 %% paths
 % Base path for MonteCarloResults
