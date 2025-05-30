@@ -16,39 +16,39 @@ Ensure you have MATLAB R2024a installed on your machine to run the simulation co
 The repository contains the following key components:
 
 ### Input Files
-- **input/**: Directory containing all necessary input files for the simulation:
-  - `Inputs_mpox2024_set2.xlsx`: Main input file containing model parameters and transition probabilities
-  - Other supporting input files required for the simulation
-
-### Shell Scripts
-The repository includes a main shell script for running simulations:
-- `Mpox2024_ShellScript.m`: Main simulation script that supports multiple scenarios. You can configure:
-  * Number of Monte Carlo iterations (`num_iterations`)
-  * Vaccine effectiveness waning mode (`waning_ve_mode`: 0-4)
-  * Scenarios to run (`scenarios`: array of scenario numbers 0-22)
-    - Detailed descriptions of each scenario and their corresponding numbers can be found in `Mpox_2024.pdf`
+**input/**: Directory containing all necessary input files for the simulation:
+- `Inputs_mpox2024_set2.xlsx`: Main input file containing model parameters and transition probabilities
+- Other supporting input files required for the simulation
 
 ### Core Simulation Files
-- **Main Simulation Scripts**:
-  - `mpox2024_shellMod.m`: Core simulation module
-  - `mpox2024_parameters.m`: Model parameters configuration
-  - `infection9.m`: Infection dynamics implementation
-  - `calc_infec_prob4.m`: Infection probability calculations
-  - `transition5.m`: State transition logic
+#### Shell Script:
+The repository includes a main shell script for running simulations:
+`Mpox2024_ShellScript.m`: Main simulation script that supports multiple scenarios. You can configure:
+* Number of Monte Carlo iterations (`num_iterations`)
+* Vaccine effectiveness waning mode (`waning_ve_mode`: 0-4)
+* Scenarios to run (`scenarios`: array of scenario numbers 0-22)
+   * Detailed descriptions of each scenario and their corresponding numbers can be found in `Mpox_2024.pdf`
 
-### Helper Functions
+#### Main Simulation Scripts:
+- `mpox2024_shellMod.m`: Core simulation module
+- `mpox2024_parameters.m`: Model parameters configuration
+- `infection9.m`: Infection dynamics implementation
+- `calc_infec_prob4.m`: Infection probability calculations
+- `transition5.m`: State transition logic
+
+#### Helper Functions:
 - `find_indices.m`: Utility for index management
 - `find_demog_rows.m` and `find_demog_rows2.m`: Demographic data processing
 - `create_demog_groups.m`: Population group management
 - `cell2csv.m`: Data export utilities
 - `col_idx_to_name.m` and `read_table.m`: Data handling utilities
 
-### Analysis and Visualization
+#### Analysis and Visualization:
 - `bootstrap_mpox.m`: Bootstrap analysis implementation
 - `gen_metric.m`: Metric generation for analysis
 
 ### Results and Output
-- **MonteCarloResults/**: Directory containing simulation results
+**MonteCarloResults/**: Directory containing simulation results
 
 ## Running Simulations
 To run a simulation:
