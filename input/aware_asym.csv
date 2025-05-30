@@ -1,0 +1,3 @@
+pox_aware,alive,hiv_aware,pox_status,new_state,new_prob
+0,1,0,1,1,0.01
+0,1,1,1,1,0.1

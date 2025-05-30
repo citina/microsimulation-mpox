@@ -1,0 +1,3 @@
+pox_status,treatment,alive,new_state,new_prob
+2,1,1,3,0.7
+2,0,1,3,0.333333333

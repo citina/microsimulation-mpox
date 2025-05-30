@@ -1,0 +1,4 @@
+vaccinated,pox_status,pox_aware,alive,new_state,new_prob
+0,0,0,1,1,0.000153846
+0,1,0,1,1,0.000153846
+0,1,1,1,1,0.95

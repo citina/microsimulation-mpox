@@ -48,6 +48,7 @@ MonteCarloResults/2Xnew_mpox2024_S*/*
 Comparison_plots/*
 plot_ve_waning.py
 ve_waning_comparison.png
+compare_results.py
 
 # OS generated files
 .DS_Store
