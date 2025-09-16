@@ -10,6 +10,7 @@ if exist('local_sim_dataDir', 'var')
     S = local_S;
     WANING_VE_MODE = local_WANING_VE_MODE;
     ENABLE_SENSITIVITY = local_ENABLE_SENSITIVITY;
+    IMPORT_DIAGNOSED = local_IMPORT_DIAGNOSED;
 else
     state_matrices_path = convertStringsToChars(sim_dataDir);
 end
@@ -226,7 +227,11 @@ for t = 1:T
         infect_id = find(alive==1 & pox_status==0);
         infect_id = randsample(infect_id, const_import_num);
         state_matrix(infect_id, StateMatCols.pox_status) = 2;
-        state_matrix(infect_id, StateMatCols.pox_aware) = 1;
+        if IMPORT_DIAGNOSED
+            state_matrix(infect_id, StateMatCols.pox_aware) = 1;
+        else
+            state_matrix(infect_id, StateMatCols.pox_aware) = 0;
+        end
     elseif IMPORTATION_TYPE == 2
         % converting X people from sus to symptomatic according to import_wk and import_num
         for wk = import_wk
@@ -235,7 +240,11 @@ for t = 1:T
                 infect_id = find(alive==1 & pox_status==0);
                 infect_id = randsample(infect_id, import_num(tmp_i));
                 state_matrix(infect_id, StateMatCols.pox_status) = 2;
-                state_matrix(infect_id, StateMatCols.pox_aware) = 1;
+                if IMPORT_DIAGNOSED
+                    state_matrix(infect_id, StateMatCols.pox_aware) = 1;
+                else
+                    state_matrix(infect_id, StateMatCols.pox_aware) = 0;
+                end
             end
         end
     end
@@ -956,6 +965,21 @@ function create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_tr
         fprintf(fid, 'Sensitivity Mode: 2 (halve imports with probabilistic rounding)\n\n');
     else
         fprintf(fid, 'Sensitivity Mode: %d (custom)\n\n', ENABLE_SENSITIVITY);
+    end
+    % Record import awareness mode
+    try
+        if evalin('base','exist(''IMPORT_DIAGNOSED'',''var'')')
+            imp_diag = evalin('base','IMPORT_DIAGNOSED');
+        else
+            imp_diag = 1; % default
+        end
+    catch
+        imp_diag = 1;
+    end
+    if imp_diag
+        fprintf(fid, 'Imported Case Awareness: diagnosed (pox_aware=1)\n\n');
+    else
+        fprintf(fid, 'Imported Case Awareness: undiagnosed (pox_aware=0)\n\n');
     end
     
     % Add detailed scenario description based on scenario number

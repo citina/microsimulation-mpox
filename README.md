@@ -37,6 +37,9 @@ The repository includes a main shell script for running simulations:
     - `0`: Off (use baseline import schedule)
     - `1`: Double imports (each scheduled import count multiplied by 2)
     - `2`: Halve imports using probabilistic rounding (keeps weekly counts integers; total ≈ 50% in expectation)
+  * Import awareness (`import_diagnosed`):
+    - `1` (default): Imported cases are diagnosed immediately (sets `pox_aware = 1`)
+    - `0`: Imported cases are undiagnosed (sets `pox_aware = 0`)
 
 #### Main Simulation Scripts:
 - `mpox2024_shellMod.m`: Core simulation module
