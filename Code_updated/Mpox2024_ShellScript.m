@@ -11,6 +11,10 @@ clear
 close all
 clc
 
+% Project root is the parent of this script's folder
+thisFileDir = fileparts(mfilename('fullpath'));
+projectRoot = fileparts(thisFileDir);
+
 % Store the original working directory
 originalDir = pwd;
 
@@ -20,9 +24,9 @@ fprintf('Number of CPU cores: %d\n', numCores);
 
 % Default configuration structure
 config = struct(...
-    'workingDir', pwd, ...
-    'dataDirHeader', fullfile(pwd, 'MonteCarloResults'), ...
-    'inputFile', fullfile(pwd, 'input', 'Inputs_mpox2024_set2.xlsx'), ...
+    'workingDir', projectRoot, ...
+    'dataDirHeader', fullfile(projectRoot, 'MonteCarloResults'), ...
+    'inputFile', fullfile(projectRoot, 'input', 'Inputs_mpox2024_set2.xlsx'), ...
     'num_iterations', 20, ...
     'waning_ve_mode', 2, ...  % 0: No waning, 1: wanes to 0, 2: wanes to 50%, 3: wanes to 75%, 4: wanes to 25%
     'scenarios', [23 24 25], ...     % [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25]
@@ -119,7 +123,7 @@ function runIteration(iters, testVersionPath, config, testVersion)
     % Set random seed for reproducibility
     rng('shuffle');
     
-    % Set the current directory to the working directory
+    % Set the current directory to the working directory (project root)
     cd(config.workingDir);
     
     % Set global variables for mpox2024_shellMod
