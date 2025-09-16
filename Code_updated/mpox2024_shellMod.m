@@ -124,8 +124,15 @@ if IMPORTATION_TYPE == 2
 end
 
 % Set sensitivity analysis
-if ENABLE_SENSITIVITY
+if ENABLE_SENSITIVITY == 1
+    % Existing mode: double imports
     import_num = import_num * 2;
+elseif ENABLE_SENSITIVITY == 2
+    % New mode: reduce imports by ~50% with probabilistic rounding to keep integers
+    scaled = import_num * 0.5;
+    base = floor(scaled);
+    frac = scaled - base;
+    import_num = base + (rand(size(import_num)) < frac);
 end
 
 
@@ -712,7 +719,7 @@ tally_tbl.Properties.VariableNames(1:end) = tallyHeaders;
 writetable(tally_tbl, [matrix_name, '.csv'])
 
 % Create memo file with scenario information
-create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_transition_path, foi);
+create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_transition_path, foi, ENABLE_SENSITIVITY);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%% Helper Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function state_matrix = update_ve(state_matrix, StateMatCols, WANING_VE_MODE)
@@ -918,7 +925,7 @@ function [IMPORTATION_TYPE, iso_transition_path, foi, const_import_num] = set_sc
     end
 end
 
-function create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_transition_path, foi)
+function create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_transition_path, foi, ENABLE_SENSITIVITY)
     % Create a memo file with scenario information
     % Inputs:
     %   S - Scenario number
@@ -939,7 +946,17 @@ function create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_tr
     fprintf(fid, 'Number of Iterations: %d\n', NUM_ITERATIONS);
     fprintf(fid, 'Scenario Number: S%d\n', S);
     fprintf(fid, 'Isolation Transition Path: %s\n', iso_transition_path);
-    fprintf(fid, 'Force of Infection: %.2f\n\n', foi);
+    fprintf(fid, 'Force of Infection: %.2f\n', foi);
+    % Record sensitivity mode
+    if ENABLE_SENSITIVITY == 0
+        fprintf(fid, 'Sensitivity Mode: 0 (off)\n\n');
+    elseif ENABLE_SENSITIVITY == 1
+        fprintf(fid, 'Sensitivity Mode: 1 (double imports)\n\n');
+    elseif ENABLE_SENSITIVITY == 2
+        fprintf(fid, 'Sensitivity Mode: 2 (halve imports with probabilistic rounding)\n\n');
+    else
+        fprintf(fid, 'Sensitivity Mode: %d (custom)\n\n', ENABLE_SENSITIVITY);
+    end
     
     % Add detailed scenario description based on scenario number
     fprintf(fid, 'Scenario Description:\n');

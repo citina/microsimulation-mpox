@@ -26,8 +26,17 @@ The repository includes a main shell script for running simulations:
 - `Mpox2024_ShellScript.m`: Main simulation script that supports multiple scenarios. You can configure:
   * Number of Monte Carlo iterations (`num_iterations`)
   * Vaccine effectiveness waning mode (`waning_ve_mode`: 0-4)
+    - `0`: No waning
+    - `1`: Wanes to 0%
+    - `2`: Wanes to 50%
+    - `3`: Wanes to 75%
+    - `4`: Wanes to 25%
   * Scenarios to run (`scenarios`: array of scenario numbers 0-25)
     - Detailed descriptions of each scenario and their corresponding numbers can be found in `Mpox_2024.pdf`
+  * Sensitivity mode (`enable_sensitivity`):
+    - `0`: Off (use baseline import schedule)
+    - `1`: Double imports (each scheduled import count multiplied by 2)
+    - `2`: Halve imports using probabilistic rounding (keeps weekly counts integers; total ≈ 50% in expectation)
 
 #### Main Simulation Scripts:
 - `mpox2024_shellMod.m`: Core simulation module
@@ -57,6 +66,7 @@ To run a simulation:
 3. Open `Mpox2024_ShellScript.m` and configure your desired settings:
    - Set `num_iterations` for the number of Monte Carlo simulations
    - Choose `waning_ve_mode` based on your vaccine effectiveness waning scenario
+   - Optionally set `enable_sensitivity` to 1 (double imports) or 2 (half imports with probabilistic rounding)
    - Select `scenarios` array with the scenario numbers you want to run
 4. Run the script in MATLAB
 5. Results will be saved in the `MonteCarloResults` directory, organized by scenario number

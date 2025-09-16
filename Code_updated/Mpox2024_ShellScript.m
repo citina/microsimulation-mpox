@@ -24,13 +24,14 @@ fprintf('Number of CPU cores: %d\n', numCores);
 
 % Default configuration structure
 config = struct(...
-    'workingDir', projectRoot, ...
+    'workingDir', thisFileDir, ...
     'dataDirHeader', fullfile(projectRoot, 'MonteCarloResults'), ...
     'inputFile', fullfile(projectRoot, 'input', 'Inputs_mpox2024_set2.xlsx'), ...
     'num_iterations', 20, ...
     'waning_ve_mode', 2, ...  % 0: No waning, 1: wanes to 0, 2: wanes to 50%, 3: wanes to 75%, 4: wanes to 25%
-    'scenarios', [23 24 25], ...     % [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25]
-    'enable_sensitivity', 0);
+    'scenarios', [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25], ...     % [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25]
+    'enable_sensitivity', 0 ...      % Sensitivity: 0=off, 1=double imports, 2=halve with probabilistic rounding
+);
 
 % Create output directory if it doesn't exist
 if ~exist(config.dataDirHeader, 'dir')
@@ -115,7 +116,7 @@ for scenario = config.scenarios
     cd(originalDir);
 end
 
-function runIteration(iters, testVersionPath, config, testVersion)
+function runIteration(iters, testVersionPath, config, testVersionStr)
     % Create unique directory for this iteration
     sim_dataDir = fullfile(testVersionPath, sprintf('iter%d/state_matrices/', iters));
     mkdir(sim_dataDir);
@@ -134,11 +135,11 @@ function runIteration(iters, testVersionPath, config, testVersion)
     NUM_ITERATIONS = config.num_iterations;
     S = config.scenario;
     testVerDir = testVersionPath;  % Set the directory for memo storage
-    testVersion = testVersion;  % Make testVersion available globally
+    testVersion = testVersionStr; 
     
     % Run simulation
     try
-        mpox2024_shellMod;
+        run(fullfile(config.workingDir, 'mpox2024_shellMod.m'));
         
         % Create tally file path
         tallyPath = fullfile(sim_dataDir, sprintf('Tally_%s.csv', testVersion));
