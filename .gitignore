@@ -15,6 +15,12 @@ MonteCarloResults/2Xnew_mpox2024_S*/*
 !MonteCarloResults/2Xnew_mpox2024_S*/*.csv
 !MonteCarloResults/2Xnew_mpox2024_S*/*.txt
 
+# Allow syncing of 0.5X scenario results
+!MonteCarloResults/0.5X*_mpox2024_S*/
+MonteCarloResults/0.5X*_mpox2024_S*/*
+!MonteCarloResults/0.5X*_mpox2024_S*/*.csv
+!MonteCarloResults/0.5X*_mpox2024_S*/*.txt
+
 # MATLAB specific files
 *.asv
 *.m~

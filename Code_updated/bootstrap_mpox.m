@@ -20,30 +20,33 @@ numWks = 85;
 
 % List of scenarios to process
 scenario_names = {
-    "2Xnew_mpox2024_S1",
-    "2Xnew_mpox2024_S2",
-    "2Xnew_mpox2024_S3",
-    "2Xnew_mpox2024_S4",
-    "2Xnew_mpox2024_S5",
-    "2Xnew_mpox2024_S6",
-    "2Xnew_mpox2024_S7",
-    "2Xnew_mpox2024_S11",
-    "2Xnew_mpox2024_S12",
-    "2Xnew_mpox2024_S13",
-    "2Xnew_mpox2024_S14",
-    "2Xnew_mpox2024_S15",
-    "2Xnew_mpox2024_S16",
-    "2Xnew_mpox2024_S17",
-    "2Xnew_mpox2024_S18",
-    "2Xnew_mpox2024_S19",
-    "2Xnew_mpox2024_S20",
-    "2Xnew_mpox2024_S21",
-    "2Xnew_mpox2024_S22"
+    "0.5Xnew_mpox2024_S1",
+    "0.5Xnew_mpox2024_S2",
+    "0.5Xnew_mpox2024_S3",
+    "0.5Xnew_mpox2024_S4",
+    "0.5Xnew_mpox2024_S5",
+    "0.5Xnew_mpox2024_S6",
+    "0.5Xnew_mpox2024_S7",
+    "0.5Xnew_mpox2024_S11",
+    "0.5Xnew_mpox2024_S12",
+    "0.5Xnew_mpox2024_S13",
+    "0.5Xnew_mpox2024_S14",
+    "0.5Xnew_mpox2024_S15",
+    "0.5Xnew_mpox2024_S16",
+    "0.5Xnew_mpox2024_S17",
+    "0.5Xnew_mpox2024_S18",
+    "0.5Xnew_mpox2024_S19",
+    "0.5Xnew_mpox2024_S20",
+    "0.5Xnew_mpox2024_S21",
+    "0.5Xnew_mpox2024_S22",
+    "0.5Xnew_mpox2024_S23",
+    "0.5Xnew_mpox2024_S24",
+    "0.5Xnew_mpox2024_S25"
 };
 %% paths
 % Base path for MonteCarloResults
 basePath = pwd;
-monteCarloPath = fullfile(basePath, "MonteCarloResults");
+monteCarloPath = fullfile(fileparts(basePath), "MonteCarloResults");
 
 % Check if MonteCarloResults directory exists
 if ~isfolder(monteCarloPath)
