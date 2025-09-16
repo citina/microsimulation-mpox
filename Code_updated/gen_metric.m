@@ -6,15 +6,10 @@
 % iterations = 1:10;
 % numWks = 85;
 
-%% set paths
-% Get the base directory (where the shell script is located)
-baseDir = pwd;
-
-% path for the tally csv
-InPath = fullfile(baseDir, 'MonteCarloResults', testVersion); 
-
-% metric matrix output path
-OutPath = fullfile(baseDir, 'MonteCarloResults', testVersion); 
+%% set paths (provided by shell script)
+global NUM_ITERATIONS testVerDir testVersion
+InPath = testVerDir; 
+OutPath = testVerDir; 
 
 %% Load tally
 % each cell element holds tally data for a specified iteration
@@ -24,6 +19,9 @@ talllyShelf = [];
 for i = 1:NUM_ITERATIONS
     % the path to the data must be modified by the iteration number and policy. 
     dataPath = fullfile(InPath, sprintf('iter%d/state_matrices/Tally_%s.csv', i, testVersion));
+    if ~exist(dataPath,'file')
+        error('gen_metric:MissingTally', 'Missing tally file: %s', dataPath);
+    end
     dataStruct = readtable(dataPath, 'PreserveVariableNames',true);
     talllyShelf(:,:,i) = dataStruct.Variables;
 end
