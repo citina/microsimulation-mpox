@@ -1,3 +1,6 @@
+# Ignore temporary files in input/ that start with ~ (e.g., Office lock files)
+input/~*
+
 MonteCarloResults/*
 !MonteCarloResults/new_mpox2024_S*/
 !MonteCarloResults/ve*_mpox2024_S*/
