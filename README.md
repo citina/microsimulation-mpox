@@ -21,13 +21,13 @@ The repository contains the following key components:
 - Other supporting input files required for the simulation
 
 ### Core Simulation Files
-#### Shell Script:
+#### Shell Scripts
 The repository includes a main shell script for running simulations:
-`Mpox2024_ShellScript.m`: Main simulation script that supports multiple scenarios. You can configure:
-* Number of Monte Carlo iterations (`num_iterations`)
-* Vaccine effectiveness waning mode (`waning_ve_mode`: 0-4)
-* Scenarios to run (`scenarios`: array of scenario numbers 0-22)
-   * Detailed descriptions of each scenario and their corresponding numbers can be found in `Mpox_2024.pdf`
+- `Mpox2024_ShellScript.m`: Main simulation script that supports multiple scenarios. You can configure:
+  * Number of Monte Carlo iterations (`num_iterations`)
+  * Vaccine effectiveness waning mode (`waning_ve_mode`: 0-4)
+  * Scenarios to run (`scenarios`: array of scenario numbers 0-25)
+    - Detailed descriptions of each scenario and their corresponding numbers can be found in `Mpox_2024.pdf`
 
 #### Main Simulation Scripts:
 - `mpox2024_shellMod.m`: Core simulation module

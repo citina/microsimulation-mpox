@@ -107,6 +107,12 @@ elseif S==18
     selected_wks = randsample(1:T, 13);
 elseif S==19
     selected_wks = randsample(1:T, 9);
+elseif S==23
+    selected_wks = randsample(1:42, 22); % weeks in 2023: 3/12/2023-12/30/2023
+elseif S==24
+    selected_wks = randsample(1:42, 13); % weeks in 2023: 3/12/2023-12/30/2023
+elseif S==25
+    selected_wks = randsample(1:42, 9); % weeks in 2023: 3/12/2023-12/30/2023
 end
 
 [IMPORTATION_TYPE, iso_transition_path, foi, const_import_num] = set_scenario_parameters(S);
@@ -117,12 +123,11 @@ if IMPORTATION_TYPE == 2
     import_num = [1 1 2 2 1 2 2 1 1 3 1 2 1 2 2 1 3 1 2 4 2 2 1 1 1 1 1 1 1 1 2 3 1 1 2 1 1 1 1 1 1 1];
 end
 
-% Set transition path for sensitivity analysis
+% Set sensitivity analysis
 if ENABLE_SENSITIVITY
-    asym2sym_transition_path = asym2sym_transition_path_9;
+    import_num = import_num * 2;
 end
-% for sensitivity analysis
-% import_num = import_num * 2;
+
 
 %% %%%%%%%%%%%%%%% Main simulation loop for each week %%%%%%%%%%%%%%%%%%%%%%%
 for t = 1:T
@@ -170,6 +175,24 @@ for t = 1:T
             else
                 foi = 2.2;
             end
+        case 23 % S23: 22 weeks in 2023 with FoI = 0.7
+            if ismember(t, selected_wks)
+                foi = 0.7;
+            else
+                foi = 2.2;
+            end
+        case 24 % S24: 13 weeks in 2023 with FoI = 0.7
+            if ismember(t, selected_wks)
+                foi = 0.7;
+            else
+                foi = 2.2;
+            end
+        case 25 % S25: 9 weeks in 2023 with FoI = 0.7
+            if ismember(t, selected_wks)
+                foi = 0.7;
+            else
+                foi = 2.2;
+            end
     end
     
     %% %%%%%%%%%%%%%%%%%%%%%%%%% update ve  %%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -201,11 +224,11 @@ for t = 1:T
         % converting X people from sus to symptomatic according to import_wk and import_num
         for wk = import_wk
             if t == wk
-            tmp_i = find(t == import_wk);
-            infect_id = find(alive==1 & pox_status==0);
-            infect_id = randsample(infect_id, import_num(tmp_i));
-            state_matrix(infect_id, StateMatCols.pox_status) = 2;
-            state_matrix(infect_id, StateMatCols.pox_aware) = 1;
+                tmp_i = find(t == import_wk);
+                infect_id = find(alive==1 & pox_status==0);
+                infect_id = randsample(infect_id, import_num(tmp_i));
+                state_matrix(infect_id, StateMatCols.pox_status) = 2;
+                state_matrix(infect_id, StateMatCols.pox_aware) = 1;
             end
         end
     end
@@ -988,6 +1011,15 @@ function create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_tr
             fprintf(fid, '- FOI = 2.2 during other weeks\n');
         elseif S == 19
             fprintf(fid, '- FOI = 0.7 for 9 randomly selected weeks\n');
+            fprintf(fid, '- FOI = 2.2 during other weeks\n');
+        elseif S == 23
+            fprintf(fid, '- FOI = 0.7 for 22 randomly selected weeks in 2023\n');
+            fprintf(fid, '- FOI = 2.2 during other weeks\n');
+        elseif S == 24
+            fprintf(fid, '- FOI = 0.7 for 13 randomly selected weeks in 2023\n');
+            fprintf(fid, '- FOI = 2.2 during other weeks\n');
+        elseif S == 25
+            fprintf(fid, '- FOI = 0.7 for 9 randomly selected weeks in 2023\n');
             fprintf(fid, '- FOI = 2.2 during other weeks\n');
         end
     else

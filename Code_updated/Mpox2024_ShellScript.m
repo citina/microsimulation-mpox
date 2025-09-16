@@ -1,8 +1,8 @@
 %% Mpox2024 Simulation Script
 % This script runs Monte Carlo simulations for Mpox transmission modeling
 % Author: Citina Liang
-% Date: 2025-04-18
-% Version: 1.0
+% Date: 2025-09-15
+% Version: 2.0
 
 %% Initialization
 format long
@@ -22,10 +22,10 @@ fprintf('Number of CPU cores: %d\n', numCores);
 config = struct(...
     'workingDir', pwd, ...
     'dataDirHeader', fullfile(pwd, 'MonteCarloResults'), ...
-    'inputFile', '../input/Inputs_mpox2024_set2.xlsx', ...
+    'inputFile', fullfile(pwd, 'input', 'Inputs_mpox2024_set2.xlsx'), ...
     'num_iterations', 20, ...
     'waning_ve_mode', 2, ...  % 0: No waning, 1: wanes to 0, 2: wanes to 50%, 3: wanes to 75%, 4: wanes to 25%
-    'scenarios', [17 18 19], ...     % [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22]
+    'scenarios', [23 24 25], ...     % [0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25]
     'enable_sensitivity', 0);
 
 % Create output directory if it doesn't exist
