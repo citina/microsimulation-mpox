@@ -859,6 +859,13 @@ function [IMPORTATION_TYPE, iso_transition_path, foi, const_import_num] = set_sc
     foi = 0.7;
     const_import_num = 0;
     
+    % S26: No importation, standard isolation, FOI = 2.2
+    if S == 26
+        IMPORTATION_TYPE = 0;
+        foi = 2.2;
+        return
+    end
+
     % Scenario groups
     no_const_import_scenarios = [0, 8, 9, 10];
     phylo_import_scenarios = [1:7, 12:14, 20:22];
@@ -1063,6 +1070,10 @@ function create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_tr
             fprintf(fid, '- FOI = 0.7 for 9 randomly selected weeks in 2023\n');
             fprintf(fid, '- FOI = 2.2 during other weeks\n');
         end
+    elseif S == 26
+        fprintf(fid, 'No importation scenario\n');
+        fprintf(fid, '- Standard isolation (0.2)\n');
+        fprintf(fid, '- Constant FOI = 2.2\n');
     else
         fprintf(fid, 'Custom scenario\n');
     end
