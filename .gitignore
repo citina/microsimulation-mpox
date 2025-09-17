@@ -21,6 +21,17 @@ MonteCarloResults/0.5X*_mpox2024_S*/*
 !MonteCarloResults/0.5X*_mpox2024_S*/*.csv
 !MonteCarloResults/0.5X*_mpox2024_S*/*.txt
 
+# Allow syncing of import_undiag scenario results
+!MonteCarloResults/import_undiag_mpox2024_S*/
+MonteCarloResults/import_undiag_mpox2024_S*/*
+!MonteCarloResults/import_undiag_mpox2024_S*/*.csv
+!MonteCarloResults/import_undiag_mpox2024_S*/*.txt
+!MonteCarloResults/import_undiag_mpox2024_S*/iter*/
+!MonteCarloResults/import_undiag_mpox2024_S*/iter*/*.csv
+!MonteCarloResults/import_undiag_mpox2024_S*/iter*/*.txt
+!MonteCarloResults/import_undiag_mpox2024_S*/iter*/state_matrices/
+!MonteCarloResults/import_undiag_mpox2024_S*/iter*/state_matrices/*.csv
+
 # MATLAB specific files
 *.asv
 *.m~

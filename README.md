@@ -31,7 +31,7 @@ The repository includes a main shell script for running simulations:
     - `2`: Wanes to 50%
     - `3`: Wanes to 75%
     - `4`: Wanes to 25%
-  * Scenarios to run (`scenarios`: array of scenario numbers 0-25)
+  * Scenarios to run (`scenarios`: array of scenario numbers 0-26)
     - Detailed descriptions of each scenario and their corresponding numbers can be found in `Mpox_2024.pdf`
   * Sensitivity mode (`enable_sensitivity`):
     - `0`: Off (use baseline import schedule)
