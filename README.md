@@ -40,6 +40,9 @@ The repository includes a main shell script for running simulations:
   * Import awareness (`import_diagnosed`):
     - `1` (default): Imported cases are diagnosed immediately (sets `pox_aware = 1`)
     - `0`: Imported cases are undiagnosed (sets `pox_aware = 0`)
+  * Imported case symptom status (`import_asymptomatic`):
+    - `0` (default): Imported cases enter as symptomatic (sets `pox_status = 2`)
+    - `1`: Imported cases enter as asymptomatic (sets `pox_status = 1`)
 
 #### Main Simulation Scripts:
 - `mpox2024_shellMod.m`: Core simulation module
@@ -70,6 +73,7 @@ To run a simulation:
    - Set `num_iterations` for the number of Monte Carlo simulations
    - Choose `waning_ve_mode` based on your vaccine effectiveness waning scenario
    - Optionally set `enable_sensitivity` to 1 (double imports) or 2 (half imports with probabilistic rounding)
+   - Choose imported case symptom status with `import_asymptomatic` (1 = asymptomatic, 0 = symptomatic)
    - Select `scenarios` array with the scenario numbers you want to run
 4. Run the script in MATLAB
 5. Results will be saved in the `MonteCarloResults` directory, organized by scenario number

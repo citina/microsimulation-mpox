@@ -11,6 +11,7 @@ if exist('local_sim_dataDir', 'var')
     WANING_VE_MODE = local_WANING_VE_MODE;
     ENABLE_SENSITIVITY = local_ENABLE_SENSITIVITY;
     IMPORT_DIAGNOSED = local_IMPORT_DIAGNOSED;
+    IMPORT_ASYMPTOMATIC = local_IMPORT_ASYMPTOMATIC;
 else
     state_matrices_path = convertStringsToChars(sim_dataDir);
 end
@@ -226,7 +227,11 @@ for t = 1:T
         % converting X people from sus to symptomatic every week starting from Jul 30 2023
         infect_id = find(alive==1 & pox_status==0);
         infect_id = randsample(infect_id, const_import_num);
-        state_matrix(infect_id, StateMatCols.pox_status) = 2;
+        if IMPORT_ASYMPTOMATIC==1
+            state_matrix(infect_id, StateMatCols.pox_status) = 1; % asymptomatic
+        elseif IMPORT_ASYMPTOMATIC==0
+            state_matrix(infect_id, StateMatCols.pox_status) = 2; % symptomatic (default)
+        end
         if IMPORT_DIAGNOSED
             state_matrix(infect_id, StateMatCols.pox_aware) = 1;
         else
@@ -239,7 +244,11 @@ for t = 1:T
                 tmp_i = find(t == import_wk);
                 infect_id = find(alive==1 & pox_status==0);
                 infect_id = randsample(infect_id, import_num(tmp_i));
-                state_matrix(infect_id, StateMatCols.pox_status) = 2;
+                if IMPORT_ASYMPTOMATIC==1
+                    state_matrix(infect_id, StateMatCols.pox_status) = 1; % asymptomatic
+                elseif IMPORT_ASYMPTOMATIC==0
+                    state_matrix(infect_id, StateMatCols.pox_status) = 2; % symptomatic (default)
+                end
                 if IMPORT_DIAGNOSED
                     state_matrix(infect_id, StateMatCols.pox_aware) = 1;
                 else
@@ -987,6 +996,12 @@ function create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_tr
         fprintf(fid, 'Imported Case Awareness: diagnosed (pox_aware=1)\n\n');
     else
         fprintf(fid, 'Imported Case Awareness: undiagnosed (pox_aware=0)\n\n');
+    end
+    % Record import asymptomatic mode
+    if IMPORT_ASYMPTOMATIC==1
+        fprintf(fid, 'Imported Case Asymptomatic: asymptomatic (pox_status=1)\n\n');
+    else
+        fprintf(fid, 'Imported Case Asymptomatic: symptomatic (pox_status=2)\n\n');
     end
     
     % Add detailed scenario description based on scenario number
