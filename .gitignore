@@ -32,6 +32,17 @@ MonteCarloResults/import_undiag_mpox2024_S*/*
 !MonteCarloResults/import_undiag_mpox2024_S*/iter*/state_matrices/
 !MonteCarloResults/import_undiag_mpox2024_S*/iter*/state_matrices/*.csv
 
+# Allow syncing of import_asymp scenario results
+!MonteCarloResults/import_asymp*_mpox2024_S*/
+MonteCarloResults/import_asymp*_mpox2024_S*/*
+!MonteCarloResults/import_asymp*_mpox2024_S*/*.csv
+!MonteCarloResults/import_asymp*_mpox2024_S*/*.txt
+!MonteCarloResults/import_asymp*_mpox2024_S*/iter*/
+!MonteCarloResults/import_asymp*_mpox2024_S*/iter*/*.csv
+!MonteCarloResults/import_asymp*_mpox2024_S*/iter*/*.txt
+!MonteCarloResults/import_asymp*_mpox2024_S*/iter*/state_matrices/
+!MonteCarloResults/import_asymp*_mpox2024_S*/iter*/state_matrices/*.csv
+
 # MATLAB specific files
 *.asv
 *.m~
@@ -69,6 +80,13 @@ Comparison_plots/*
 plot_ve_waning.py
 ve_waning_comparison.png
 compare_results.py
+
+# temporary visualization scripts and outputs
+visualize_toaware_s20_25.py
+toaware_comparison_s20_25.png
+new_toaware_comparison_s20_25.png
+toaware_summary_s20_25.png
+new_toaware_summary_s20_25.png
 
 # OS generated files
 .DS_Store
