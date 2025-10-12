@@ -43,6 +43,17 @@ MonteCarloResults/import_asymp*_mpox2024_S*/*
 !MonteCarloResults/import_asymp*_mpox2024_S*/iter*/state_matrices/
 !MonteCarloResults/import_asymp*_mpox2024_S*/iter*/state_matrices/*.csv
 
+# Allow syncing of *Xvax vaccination policy scenario results (2Xvax, 4Xvax, etc.)
+!MonteCarloResults/*Xvax*_mpox2024_S*/
+MonteCarloResults/*Xvax*_mpox2024_S*/*
+!MonteCarloResults/*Xvax*_mpox2024_S*/*.csv
+!MonteCarloResults/*Xvax*_mpox2024_S*/*.txt
+!MonteCarloResults/*Xvax*_mpox2024_S*/iter*/
+!MonteCarloResults/*Xvax*_mpox2024_S*/iter*/*.csv
+!MonteCarloResults/*Xvax*_mpox2024_S*/iter*/*.txt
+!MonteCarloResults/*Xvax*_mpox2024_S*/iter*/state_matrices/
+!MonteCarloResults/*Xvax*_mpox2024_S*/iter*/state_matrices/*.csv
+
 # MATLAB specific files
 *.asv
 *.m~

@@ -36,7 +36,7 @@ vac2_plwh = 0.702;
 vac1_normal = 0.721;
 vac2_normal = 0.878;
 
-[~, filePaths] = xlsread(SIM_INPUT_FILE, 'FilePaths', 'B1:B19');
+[~, filePaths] = xlsread(SIM_INPUT_FILE, 'FilePaths', 'B1:B60');
 
 % Initial population state matrix input file
 init_pop_file = filePaths{1};
@@ -61,6 +61,8 @@ deathNatural_transition_path = filePaths{7};
 % vac1_wk2 = filePaths{9};
 % vac1_wk3 = filePaths{10};
 vac1_transition_path = filePaths{11};
+vac1_2X_transition_path = filePaths{59};
+vac1_4X_transition_path = filePaths{60};
 vac2_transition_path = filePaths{12};
 
 % Paths defined for awareness transition

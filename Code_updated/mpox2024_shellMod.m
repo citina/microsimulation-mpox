@@ -12,6 +12,7 @@ if exist('local_sim_dataDir', 'var')
     ENABLE_SENSITIVITY = local_ENABLE_SENSITIVITY;
     IMPORT_DIAGNOSED = local_IMPORT_DIAGNOSED;
     IMPORT_ASYMPTOMATIC = local_IMPORT_ASYMPTOMATIC;
+    ENABLE_VAX_POLICY = local_ENABLE_VAX_POLICY;
 else
     state_matrices_path = convertStringsToChars(sim_dataDir);
 end
@@ -359,7 +360,19 @@ for t = 1:T
         % run this block only if one of the above vax policies (12-15) are not selected            
         % those sus or asymptomatic can be vaccinated (1st dose)
         % the aware asym and unaware asym have different prob of vaccinated
-        [state_matrix, vac1Tallytmp] = transition5('vaccinated', vac1_transition_path, ...
+        
+        % Select vaccination transition path based on enable_vax_policy
+        if ENABLE_VAX_POLICY == 0
+            selected_vac1_path = vac1_transition_path;  % Default
+        elseif ENABLE_VAX_POLICY == 1
+            selected_vac1_path = vac1_2X_transition_path;  % 2X uptake
+        elseif ENABLE_VAX_POLICY == 2
+            selected_vac1_path = vac1_4X_transition_path;  % 4X uptake
+        else
+            selected_vac1_path = vac1_transition_path;  % Default fallback
+        end
+        
+        [state_matrix, vac1Tallytmp] = transition5('vaccinated', selected_vac1_path, ...
                                     state_matrix, StateMatCols, demog_group_idx, ...
                                     future_state_param_names, 1);
 
@@ -737,7 +750,7 @@ tally_tbl.Properties.VariableNames(1:end) = tallyHeaders;
 writetable(tally_tbl, [matrix_name, '.csv'])
 
 % Create memo file with scenario information
-create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_transition_path, foi, ENABLE_SENSITIVITY);
+create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_transition_path, foi, ENABLE_SENSITIVITY, ENABLE_VAX_POLICY);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%% Helper Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function state_matrix = update_ve(state_matrix, StateMatCols, WANING_VE_MODE)
@@ -950,13 +963,15 @@ function [IMPORTATION_TYPE, iso_transition_path, foi, const_import_num] = set_sc
     end
 end
 
-function create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_transition_path, foi, ENABLE_SENSITIVITY)
+function create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_transition_path, foi, ENABLE_SENSITIVITY, ENABLE_VAX_POLICY)
     % Create a memo file with scenario information
     % Inputs:
     %   S - Scenario number
     %   testVerDir - Simulation output directory
     %   iso_transition_path - Path to isolation transition file
     %   foi - Force of infection value
+    %   ENABLE_SENSITIVITY - Sensitivity analysis mode
+    %   ENABLE_VAX_POLICY - Vaccination policy mode
     
     % Create memo file path
     memo_path = fullfile(testVerDir, 'memo.txt');
@@ -981,6 +996,16 @@ function create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_tr
         fprintf(fid, 'Sensitivity Mode: 2 (halve imports with probabilistic rounding)\n\n');
     else
         fprintf(fid, 'Sensitivity Mode: %d (custom)\n\n', ENABLE_SENSITIVITY);
+    end
+    % Record vaccination policy mode
+    if ENABLE_VAX_POLICY == 0
+        fprintf(fid, 'Vaccination Policy: 0 (default vac1 transition path)\n\n');
+    elseif ENABLE_VAX_POLICY == 1
+        fprintf(fid, 'Vaccination Policy: 1 (vac1_2X - double vaccinated uptake)\n\n');
+    elseif ENABLE_VAX_POLICY == 2
+        fprintf(fid, 'Vaccination Policy: 2 (vac1_4X - quadruple vaccinated uptake)\n\n');
+    else
+        fprintf(fid, 'Vaccination Policy: %d (custom)\n\n', ENABLE_VAX_POLICY);
     end
     % Record import awareness mode
     try
