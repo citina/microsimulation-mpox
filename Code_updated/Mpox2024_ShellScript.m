@@ -33,7 +33,7 @@ config = struct(...
     'enable_sensitivity', 0, ...      % Sensitivity: 0=off (default), 1=double imports, 2=halve with probabilistic rounding
     'import_diagnosed', 1, ...         % Import awareness: 1=imported are aware (diagnosed) (default), 0=imported remain undiagnosed
     'import_asymptomatic', 0, ...       % If 1, imported cases are asymptomatic (pox_status=1); if 0, symptomatic (pox_status=2) (default)
-    'enable_vax_policy', 1 ...       % If 0, run vac1 (default), if 1, run vac1_2X (with double vaccinated uptake), if 2, run vac1_4X (with quadruple vaccinated uptake)
+    'enable_vax_policy', 3 ...       % If 0, run vac1 (default), if 1, run vac1_2X (with double vaccinated uptake), if 2, run vac1_4X (with quadruple vaccinated uptake), if 3, run vac1_10X
 );
 
 % Create output directory if it doesn't exist
@@ -44,7 +44,7 @@ end
 % Main simulation loop
 for scenario = config.scenarios
     % Create version-specific directory
-    testVersion = sprintf('2Xvax_mpox2024_S%d', scenario);
+    testVersion = sprintf('10Xvax_mpox2024_S%d', scenario);
     testVersionPath = fullfile(config.dataDirHeader, testVersion);
     mkdir(testVersionPath);
     

@@ -21,11 +21,11 @@ numWks = 85;
 % List of scenarios to process
 scenario_names = {
     "2Xvax_mpox2024_S6",
-    "4Xvax_mpox2024_S6"
     '2Xvax_mpox2024_S21',
-    '4Xvax_mpox2024_S21',
     '2Xvax_mpox2024_S22',
-    '4Xvax_mpox2024_S22'
+    '10Xvax_mpox2024_S6',
+    '10Xvax_mpox2024_S21',
+    '10Xvax_mpox2024_S22'
 };
 %% paths
 % Base path for MonteCarloResults

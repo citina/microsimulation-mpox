@@ -368,6 +368,8 @@ for t = 1:T
             selected_vac1_path = vac1_2X_transition_path;  % 2X uptake
         elseif ENABLE_VAX_POLICY == 2
             selected_vac1_path = vac1_4X_transition_path;  % 4X uptake
+        elseif ENABLE_VAX_POLICY == 3
+            selected_vac1_path = vac1_10X_transition_path;  % 10X uptake
         else
             selected_vac1_path = vac1_transition_path;  % Default fallback
         end
@@ -1004,6 +1006,8 @@ function create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_tr
         fprintf(fid, 'Vaccination Policy: 1 (vac1_2X - double vaccinated uptake)\n\n');
     elseif ENABLE_VAX_POLICY == 2
         fprintf(fid, 'Vaccination Policy: 2 (vac1_4X - quadruple vaccinated uptake)\n\n');
+    elseif ENABLE_VAX_POLICY == 3
+        fprintf(fid, 'Vaccination Policy: 3 (vac1_10X - 10X uptake)\n\n');
     else
         fprintf(fid, 'Vaccination Policy: %d (custom)\n\n', ENABLE_VAX_POLICY);
     end

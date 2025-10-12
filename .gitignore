@@ -91,6 +91,8 @@ Comparison_plots/*
 plot_ve_waning.py
 ve_waning_comparison.png
 compare_results.py
+compare_vax_scenarios.py
+vax_comparison_plots/*
 
 # temporary visualization scripts and outputs
 visualize_toaware_s20_25.py
