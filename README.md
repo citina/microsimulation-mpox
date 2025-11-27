@@ -43,11 +43,6 @@ The repository includes a main shell script for running simulations:
   * Imported case symptom status (`import_asymptomatic`):
     - `0` (default): Imported cases enter as symptomatic (sets `pox_status = 2`)
     - `1`: Imported cases enter as asymptomatic (sets `pox_status = 1`)
-  * Vaccination policy (`enable_vax_policy`):
-    - `0` (default): Baseline first-dose uptake schedule
-    - `1`: Double uptake (`vac1_2X` transition matrix)
-    - `2`: Quadruple uptake (`vac1_4X`)
-    - `3`: Ten-fold uptake (`vac1_10X`)
 
 #### Main Simulation Scripts:
 - `mpox2024_shellMod.m`: Core simulation module
@@ -64,12 +59,11 @@ The repository includes a main shell script for running simulations:
 - `col_idx_to_name.m` and `read_table.m`: Data handling utilities
 
 #### Analysis and Visualization:
-- `bootstrap_mpox.m`: Bootstrap analysis implementation that can also produce cumulative metrics and pairwise scenario comparison CSVs under `MonteCarloResults/comparisons/`
+- `bootstrap_mpox.m`: Bootstrap analysis implementation
 - `gen_metric.m`: Metric generation for analysis
 
 ### Results and Output
 **MonteCarloResults/**: Directory containing simulation results
-- `comparisons/`: Optional folder with bootstrap differences between scenario pairs (added when `bootstrap_mpox.m` runs with `comparison_pairs` configured). Each CSV includes week index, mean difference, and 95% bootstrap interval columns.
 
 ## Running Simulations
 To run a simulation:
@@ -79,11 +73,10 @@ To run a simulation:
    - Set `num_iterations` for the number of Monte Carlo simulations
    - Choose `waning_ve_mode` based on your vaccine effectiveness waning scenario
    - Optionally set `enable_sensitivity` to 1 (double imports) or 2 (half imports with probabilistic rounding)
-   - Configure import awareness (`import_diagnosed`) and symptom status (`import_asymptomatic`)
-   - Select a vaccination uptake policy via `enable_vax_policy` if you need alternative coverage scenarios
+   - Choose imported case symptom status with `import_asymptomatic` (1 = asymptomatic, 0 = symptomatic)
    - Select `scenarios` array with the scenario numbers you want to run
 4. Run the script in MATLAB
-5. Results will be saved in the `MonteCarloResults` directory, organized by scenario number (and, when comparisons are enabled in `bootstrap_mpox.m`, summarized differences will appear under `MonteCarloResults/comparisons/`)
+5. Results will be saved in the `MonteCarloResults` directory, organized by scenario number
 
 ## Contact
 For queries or collaboration requests, please contact Citina Liang at [citinal@usc.edu](mailto:citinal@usc.edu). Please reach out before using the model to ensure it is applied appropriately. 
