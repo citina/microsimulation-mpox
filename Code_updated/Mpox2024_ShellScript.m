@@ -29,11 +29,11 @@ config = struct(...
     'inputFile', fullfile(projectRoot, 'input', 'Inputs_mpox2024_set2.xlsx'), ...
     'num_iterations', 20, ...
     'waning_ve_mode', 2, ...  % 0: No waning, 1: wanes to 0, 2: wanes to 50% (default), 3: wanes to 75%, 4: wanes to 25%
-    'scenarios', [6 22 21], ...  % [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26]
+    'scenarios', [6], ...  % [1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26]
     'enable_sensitivity', 0, ...      % Sensitivity: 0=off (default), 1=double imports, 2=halve with probabilistic rounding
     'import_diagnosed', 1, ...         % Import awareness: 1=imported are aware (diagnosed) (default), 0=imported remain undiagnosed
     'import_asymptomatic', 0, ...       % If 1, imported cases are asymptomatic (pox_status=1); if 0, symptomatic (pox_status=2) (default)
-    'enable_vax_policy', 3 ...       % If 0, run vac1 (default), if 1, run vac1_2X (with double vaccinated uptake), if 2, run vac1_4X (with quadruple vaccinated uptake), if 3, run vac1_10X
+    'enable_vax_policy', 0 ...       % If 0, run vac1 (default), if 1, run vac1_2X (with double vaccinated uptake), if 2, run vac1_4X (with quadruple vaccinated uptake), if 3, run vac1_10X
 );
 
 % Create output directory if it doesn't exist
@@ -44,7 +44,7 @@ end
 % Main simulation loop
 for scenario = config.scenarios
     % Create version-specific directory
-    testVersion = sprintf('10Xvax_mpox2024_S%d', scenario);
+    testVersion = sprintf('new_mpox2024_S%d', scenario);
     testVersionPath = fullfile(config.dataDirHeader, testVersion);
     mkdir(testVersionPath);
     

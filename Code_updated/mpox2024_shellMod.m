@@ -301,9 +301,6 @@ for t = 1:T
     
     % Track new infections by demographic
     new_infect = unique(find(state_matrix_bfInfected(:,StateMatCols.pox_status)~=state_matrix(:, StateMatCols.pox_status)));
-    
-    % number of people do not infect any new people
-
 
     % number of people in each group turn to infected
     infect_hiv = sum(state_matrix(new_infect, StateMatCols.hiv_status)~=0);
@@ -752,7 +749,7 @@ tally_tbl.Properties.VariableNames(1:end) = tallyHeaders;
 writetable(tally_tbl, [matrix_name, '.csv'])
 
 % Create memo file with scenario information
-create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_transition_path, foi, ENABLE_SENSITIVITY, ENABLE_VAX_POLICY);
+create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_transition_path, foi, ENABLE_SENSITIVITY, ENABLE_VAX_POLICY, IMPORT_DIAGNOSED, IMPORT_ASYMPTOMATIC);
 
 %% %%%%%%%%%%%%%%%%%%%%%%%% Helper Functions %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function state_matrix = update_ve(state_matrix, StateMatCols, WANING_VE_MODE)
@@ -965,7 +962,7 @@ function [IMPORTATION_TYPE, iso_transition_path, foi, const_import_num] = set_sc
     end
 end
 
-function create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_transition_path, foi, ENABLE_SENSITIVITY, ENABLE_VAX_POLICY)
+function create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_transition_path, foi, ENABLE_SENSITIVITY, ENABLE_VAX_POLICY, IMPORT_DIAGNOSED, IMPORT_ASYMPTOMATIC)
     % Create a memo file with scenario information
     % Inputs:
     %   S - Scenario number
@@ -974,6 +971,8 @@ function create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_tr
     %   foi - Force of infection value
     %   ENABLE_SENSITIVITY - Sensitivity analysis mode
     %   ENABLE_VAX_POLICY - Vaccination policy mode
+    %   IMPORT_DIAGNOSED - Import diagnosis mode
+    %   IMPORT_ASYMPTOMATIC - Import asymptomatic mode
     
     % Create memo file path
     memo_path = fullfile(testVerDir, 'memo.txt');
@@ -1012,22 +1011,14 @@ function create_scenario_memo(S, testVerDir, testVersion, NUM_ITERATIONS, iso_tr
         fprintf(fid, 'Vaccination Policy: %d (custom)\n\n', ENABLE_VAX_POLICY);
     end
     % Record import awareness mode
-    try
-        if evalin('base','exist(''IMPORT_DIAGNOSED'',''var'')')
-            imp_diag = evalin('base','IMPORT_DIAGNOSED');
-        else
-            imp_diag = 1; % default
-        end
-    catch
-        imp_diag = 1;
-    end
-    if imp_diag
-        fprintf(fid, 'Imported Case Awareness: diagnosed (pox_aware=1)\n\n');
+    if IMPORT_DIAGNOSED == 1
+        fprintf(fid, 'Imported Case Awareness: diagnosed (pox_aware=1)\n');
     else
-        fprintf(fid, 'Imported Case Awareness: undiagnosed (pox_aware=0)\n\n');
+        fprintf(fid, 'Imported Case Awareness: undiagnosed (pox_aware=0)\n');
     end
+    
     % Record import asymptomatic mode
-    if IMPORT_ASYMPTOMATIC==1
+    if IMPORT_ASYMPTOMATIC == 1
         fprintf(fid, 'Imported Case Asymptomatic: asymptomatic (pox_status=1)\n\n');
     else
         fprintf(fid, 'Imported Case Asymptomatic: symptomatic (pox_status=2)\n\n');
