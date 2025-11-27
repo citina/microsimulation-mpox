@@ -20,12 +20,12 @@ numWks = 85;
 
 % List of scenarios to process
 scenario_names = {
-    "2Xvax_mpox2024_S6",
-    '2Xvax_mpox2024_S21',
-    '2Xvax_mpox2024_S22',
-    '10Xvax_mpox2024_S6',
-    '10Xvax_mpox2024_S21',
-    '10Xvax_mpox2024_S22'
+    % "2Xvax_mpox2024_S6",
+    % '2Xvax_mpox2024_S21',
+    % '2Xvax_mpox2024_S22',
+    % '10Xvax_mpox2024_S6',
+    % '10Xvax_mpox2024_S21',
+    % '10Xvax_mpox2024_S22'
 };
 %% paths
 % Base path for MonteCarloResults
@@ -58,48 +58,78 @@ for scenarioIdx = 1:length(scenario_names)
         continue;
     end
 
-    % a matrix to store indecies of iterations
-    % e.g.: if 3 iterations, then randomly select 3 samples with replacement
-    rng(666);
-    smpls = zeros(bs, length(iterations));
-    for i = 1:bs
-        smpls(i,:) = randsample(iterations, length(iterations), true);
-    end
+    % Define metric configurations so cumulative variants can be added easily
+    metrics_definitions = struct( ...
+        'source', {'ToAware', 'ToAware_hiv',...
+                   'To_aware_b', 'To_aware_h', 'To_aware_w',...
+                   'ToVax1', 'ToVax2', 'ToVax', 'ToVax1Plwh',...
+                   'NewInfections', 'newInfect_hiv', 'r_t',...
+                   'ToAware'}, ...
+        'output', {'ToAware', 'ToAware_hiv',...
+                   'To_aware_b', 'To_aware_h', 'To_aware_w',...
+                   'ToVax1', 'ToVax2', 'ToVax', 'ToVax1Plwh',...
+                   'NewInfections', 'newInfect_hiv', 'r_t',...
+                   'ToAwareCum'}, ...
+        'isCumulative', {false, false,...
+                         false, false, false,...
+                         false, false, false, false,...
+                         false, false, false,...
+                         true});
 
-    % metricShelf is a struct where each field is a metric name, and each
-    % metric contains subfields for each iteration.
-    % Metrics of interest
-    metrics_names = {'ToAware', 'ToAware_hiv',...
-        'To_aware_b', 'To_aware_h', 'To_aware_w',...
-        'ToVax1', 'ToVax2', 'ToVax', 'ToVax1Plwh',...
-        'NewInfections', 'newInfect_hiv', 'r_t'};
+    metrics_names = {metrics_definitions.output};
 
     % Initialize the struct
     metricShelf = struct();
 
-    for i = 1:length(metrics_names)
-        for j = iterations
-            metricShelf.(metrics_names{i}).(['Iteration' num2str(j)]) = []; % Initialize each field
-        end
-    end
-
     % read in tally for each iteration
     % save all iteration results for each metric
+    loadedIterations = [];
     for i = iterations
-        % tally path
         tally_path = fullfile(InPath, sprintf('iter%d', i), 'state_matrices', sprintf('Tally_%s.csv', Scenario_name));
         if ~isfile(tally_path)
-            warning('File not found: %s. Skipping scenario.', tally_path);
+            warning('File not found: %s. Skipping iteration %d for scenario %s.', tally_path, i, Scenario_name);
             continue;
         end
         tally_table = readtable(tally_path);
-        for metric_idx = 1:length(metrics_names) 
-            metricName = metrics_names{metric_idx};
-            metricVector = tally_table.(metricName);
-            
-            % Store the vector in the corresponding struct field and iteration
-            metricShelf.(metricName).(['Iteration' num2str(i)]) = metricVector;
-        end    
+        metricDataTemp = struct();
+        iterationHasAllMetrics = true;
+        for metric_idx = 1:length(metrics_definitions)
+            metricDef = metrics_definitions(metric_idx);
+            if ~ismember(metricDef.source, tally_table.Properties.VariableNames)
+                warning('Metric %s not found in %s. Skipping iteration %d.', metricDef.source, tally_path, i);
+                iterationHasAllMetrics = false;
+                break;
+            end
+            metricVector = tally_table.(metricDef.source);
+            if metricDef.isCumulative
+                metricVector = cumsum(metricVector);
+            end
+            metricDataTemp.(metricDef.output) = metricVector;
+        end
+        if ~iterationHasAllMetrics
+            continue;
+        end
+        loadedIterations(end+1) = i; %#ok<SAGROW>
+        for metricField = fieldnames(metricDataTemp)'
+            metricName = metricField{1};
+            if ~isfield(metricShelf, metricName)
+                metricShelf.(metricName) = struct();
+            end
+            metricShelf.(metricName).(['Iteration' num2str(i)]) = metricDataTemp.(metricName);
+        end
+    end
+
+    if isempty(loadedIterations)
+        warning('No iterations loaded for scenario %s. Skipping.', Scenario_name);
+        continue;
+    end
+
+    % a matrix to store indices of iterations actually available
+    rng(666);
+    numLoadedIterations = numel(loadedIterations);
+    smpls = zeros(bs, numLoadedIterations);
+    for i = 1:bs
+        smpls(i,:) = randsample(loadedIterations, numLoadedIterations, true);
     end
 
     % Validate metric dimensions
@@ -159,6 +189,85 @@ function validateMetricDimensions(metricShelf, numWks)
                 error('Invalid dimension for metric %s, iteration %s', metric{1}, iter{1});
             end
         end
+    end
+end
+
+%% ========== PAIRWISE SCENARIO COMPARISON ==========
+% Compare metrics between two scenarios via bootstrap
+% Define pairs: each row is {scenarioA, scenarioB, metric_source, metric_output, isCumulative}
+comparison_pairs = {
+    % 'new_mpox2024_S6', '2Xvax_mpox2024_S6', 'ToAware', 'ToAware', false;
+    'new_mpox2024_S6', 'new_mpox2024_S26', 'ToAware', 'ToAwareCum', true;
+};
+
+if ~isempty(comparison_pairs)
+    fprintf('\n===== Pairwise Scenario Comparisons =====\n');
+    for pairIdx = 1:size(comparison_pairs, 1)
+        scenarioA = comparison_pairs{pairIdx, 1};
+        scenarioB = comparison_pairs{pairIdx, 2};
+        metricSource = comparison_pairs{pairIdx, 3};
+        metricOutput = comparison_pairs{pairIdx, 4};
+        isCumulative = comparison_pairs{pairIdx, 5};
+        
+        fprintf('\nComparing %s vs %s for metric %s\n', scenarioA, scenarioB, metricOutput);
+        
+        % Load data for both scenarios
+        [dataA, iterA] = loadScenarioMetric(monteCarloPath, scenarioA, metricSource, isCumulative, iterations);
+        [dataB, iterB] = loadScenarioMetric(monteCarloPath, scenarioB, metricSource, isCumulative, iterations);
+        
+        numIterA = numel(iterA);
+        numIterB = numel(iterB);
+        
+        % Bootstrap the difference
+        rng(666);
+        diffShelf = zeros(bs, numWks+1);
+        for b = 1:bs
+            % Sample iterations with replacement for each scenario
+            sampA = randsample(iterA, numIterA, true);
+            sampB = randsample(iterB, numIterB, true);
+            
+            % Compute mean for each scenario in this bootstrap
+            tempA = zeros(numIterA, numWks+1);
+            tempB = zeros(numIterB, numWks+1);
+            for k = 1:numIterA
+                tempA(k,:) = dataA.(['Iteration' num2str(sampA(k))]);
+            end
+            for k = 1:numIterB
+                tempB(k,:) = dataB.(['Iteration' num2str(sampB(k))]);
+            end
+            meanA = mean(tempA, 1);
+            meanB = mean(tempB, 1);
+            diffShelf(b,:) = meanA - meanB;
+        end
+        
+        % Summarize
+        diffMean = mean(diffShelf, 1);
+        diffLB = prctile(diffShelf, 2.5, 1);
+        diffUB = prctile(diffShelf, 97.5, 1);
+        
+        % Save results
+        resultsTable = table((0:numWks)', diffMean', diffLB', diffUB', ...
+            'VariableNames', {'Week', 'MeanDiff', 'LowerBound', 'UpperBound'});
+        outDir = fullfile(monteCarloPath, 'comparisons');
+        if ~isfolder(outDir), mkdir(outDir); end
+        filename = fullfile(outDir, sprintf('%s_vs_%s_%s_diff.csv', scenarioA, scenarioB, metricOutput));
+        writetable(resultsTable, filename);
+        fprintf('Saved %s\n', filename);
+    end
+end
+
+function [metricData, loadedIters] = loadScenarioMetric(basePath, scenarioName, metricSource, isCumulative, iterations)
+    metricData = struct();
+    loadedIters = [];
+    scenarioPath = fullfile(basePath, scenarioName);
+    for i = iterations
+        tallyPath = fullfile(scenarioPath, sprintf('iter%d', i), 'state_matrices', sprintf('Tally_%s.csv', scenarioName));
+        if ~isfile(tallyPath), continue; end
+        tbl = readtable(tallyPath);
+        vec = tbl.(metricSource);
+        if isCumulative, vec = cumsum(vec); end
+        metricData.(['Iteration' num2str(i)]) = vec;
+        loadedIters(end+1) = i; %#ok<AGROW>
     end
 end
 
