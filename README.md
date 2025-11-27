@@ -22,8 +22,7 @@ The repository contains the following key components:
 
 ### Core Simulation Files
 #### Shell Scripts
-The repository includes a main shell script for running simulations:
-- `Mpox2024_ShellScript.m`: Main simulation script that supports multiple scenarios. You can configure:
+The MATLAB sources now live inside the `Code_updated/` subdirectory. The main shell script for running simulations is therefore located at `Code_updated/Mpox2024_ShellScript.m`. This script supports multiple scenarios; you can configure:
   * Number of Monte Carlo iterations (`num_iterations`)
   * Vaccine effectiveness waning mode (`waning_ve_mode`: 0-4)
     - `0`: No waning
@@ -43,24 +42,32 @@ The repository includes a main shell script for running simulations:
   * Imported case symptom status (`import_asymptomatic`):
     - `0` (default): Imported cases enter as symptomatic (sets `pox_status = 2`)
     - `1`: Imported cases enter as asymptomatic (sets `pox_status = 1`)
+  * Vaccination uptake policy (`enable_vax_policy`):
+    - `0` (default): Use baseline `vac_1_new.csv`
+    - `1`: Double uptake using `vac_1_new2_2X.csv`
+    - `2`: Quadruple uptake using `vac_1_new2_4X.csv`
+    - `3`: Tenfold uptake using `vac_1_new2_10X.csv`
 
 #### Main Simulation Scripts:
-- `mpox2024_shellMod.m`: Core simulation module
-- `mpox2024_parameters.m`: Model parameters configuration
-- `infection9.m`: Infection dynamics implementation
-- `calc_infec_prob4.m`: Infection probability calculations
-- `transition5.m`: State transition logic
+- `Code_updated/mpox2024_shellMod.m`: Core simulation module
+- `Code_updated/mpox2024_parameters.m`: Model parameters configuration
+- `Code_updated/infection9.m`: Infection dynamics implementation
+- `Code_updated/calc_infec_prob4.m`: Infection probability calculations
+- `Code_updated/transition5.m`: State transition logic
 
 #### Helper Functions:
-- `find_indices.m`: Utility for index management
-- `find_demog_rows.m` and `find_demog_rows2.m`: Demographic data processing
-- `create_demog_groups.m`: Population group management
-- `cell2csv.m`: Data export utilities
-- `col_idx_to_name.m` and `read_table.m`: Data handling utilities
+- `Code_updated/find_indices.m`: Utility for index management
+- `Code_updated/find_demog_rows.m` and `Code_updated/find_demog_rows2.m`: Demographic data processing
+- `Code_updated/create_demog_groups.m`: Population group management
+- `Code_updated/cell2csv.m`: Data export utilities
+- `Code_updated/col_idx_to_name.m` and `Code_updated/read_table.m`: Data handling utilities
 
 #### Analysis and Visualization:
-- `bootstrap_mpox.m`: Bootstrap analysis implementation
-- `gen_metric.m`: Metric generation for analysis
+- `Code_updated/bootstrap_mpox.m`: Bootstrap analysis implementation
+- `Code_updated/gen_metric.m`: Metric generation for analysis
+- `compare_results.py`: Compare Monte Carlo outputs across scenario folders
+- `plot_ve_waning.py`: Plot vaccine waning trajectories across modes and policies
+- `visualize_toaware_s20_25.py`: Visualize awareness scenarios (`comparison_plots/`, `vax_comparison_plots/`, and related PNGs contain recent outputs)
 
 ### Results and Output
 **MonteCarloResults/**: Directory containing simulation results
@@ -69,11 +76,12 @@ The repository includes a main shell script for running simulations:
 To run a simulation:
 1. Open MATLAB
 2. Navigate to the repository directory
-3. Open `Mpox2024_ShellScript.m` and configure your desired settings:
+3. Open `Code_updated/Mpox2024_ShellScript.m` and configure your desired settings:
    - Set `num_iterations` for the number of Monte Carlo simulations
    - Choose `waning_ve_mode` based on your vaccine effectiveness waning scenario
    - Optionally set `enable_sensitivity` to 1 (double imports) or 2 (half imports with probabilistic rounding)
    - Choose imported case symptom status with `import_asymptomatic` (1 = asymptomatic, 0 = symptomatic)
+   - Pick a vaccination uptake policy with `enable_vax_policy` if you need alternative uptake schedules
    - Select `scenarios` array with the scenario numbers you want to run
 4. Run the script in MATLAB
 5. Results will be saved in the `MonteCarloResults` directory, organized by scenario number
