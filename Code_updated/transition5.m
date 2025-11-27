@@ -55,7 +55,7 @@ function [updated_state_matrix, transitionTally] = transition5(transition, trans
         % identify which transitions should occur
         state_mat_transition_rows = eligible_rows(to_transition);
 
-        % transition people to appropriate stae
+        % transition people to appropriate state
         state_matrix(state_mat_transition_rows, StateMatCols.(transition)) = newState;
             
     end

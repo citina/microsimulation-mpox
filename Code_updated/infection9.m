@@ -1,4 +1,3 @@
-% 2023
 % This function will take in a particular demographic group, a state
 % matrix, and a mixing matrix and will transition people in this
 % demographic group to infection based on a uniform random number draw
@@ -33,6 +32,7 @@ function [updated_state_matrix, infectionTally] = infection9(reference_demog_gro
     % we can thus check the 2nd number and if it is under 25, we know to divide by our risk due to condom use
     % and apply it to our calibration constant... 
     % this works because our demographic group cutoff is at 25
+    % Age group 25-34 has no age-related up/down-scaling
 
     if reference_demog_group_def(1) >= 15 && reference_demog_group_def(2) <= 24
         % if young, divide by the scale (becuase scale less than one)
