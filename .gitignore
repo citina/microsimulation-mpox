@@ -101,6 +101,12 @@ new_toaware_comparison_s20_25.png
 toaware_summary_s20_25.png
 new_toaware_summary_s20_25.png
 
+# local VE waning plotting script
+mpox_ve_waning_plot.py
+mpox_ve_1dose.png
+mpox_ve_2dose.png
+run_ve_plot.sh
+
 # OS generated files
 .DS_Store
 .DS_Store?
